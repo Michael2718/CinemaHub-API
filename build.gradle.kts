@@ -1,9 +1,9 @@
-val ktor_version: String by project
-val kotlin_version: String by project
-val logback_version: String by project
-val postgresql_driver_version: String by project
-val exposed_version: String by project
-val h2_version: String by project
+val ktorVersion: String by project
+val kotlinVersion: String by project
+val logbackVersion: String by project
+val postgresqlDriverVersion: String by project
+val exposedVersion: String by project
+val h2Version: String by project
 
 plugins {
     kotlin("jvm") version "1.9.24"
@@ -28,18 +28,21 @@ repositories {
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
 
-    implementation("org.postgresql:postgresql:$postgresql_driver_version")
+    implementation("org.postgresql:postgresql:$postgresqlDriverVersion")
 
-    implementation("com.h2database:h2:$h2_version")
+    implementation("com.h2database:h2:$h2Version")
 
-    implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
-    implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
-    implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
 
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("ch.qos.logback:logback-classic:$logback_version")
+
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
     testImplementation("io.ktor:ktor-server-tests-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
 }
