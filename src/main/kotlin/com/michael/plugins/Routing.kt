@@ -1,6 +1,5 @@
 package com.michael.plugins
 
-import com.michael.dao.MovieDao
 import com.michael.dao.MovieDaoImpl
 import com.michael.dao.UserDaoImpl
 import io.ktor.http.*

@@ -5,7 +5,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.date
-import org.jetbrains.exposed.sql.kotlin.datetime.duration
 import kotlin.time.Duration
 
 @Serializable
