@@ -1,8 +1,6 @@
 package com.michael.dao
 
 import com.michael.models.Movie
-import kotlinx.datetime.LocalDate
-import org.postgresql.util.PGInterval
 
 interface MovieDao {
     suspend fun getAll(): List<Movie>
