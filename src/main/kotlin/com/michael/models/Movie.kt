@@ -1,11 +1,12 @@
 package com.michael.models
 
+import com.michael.types.PGIntervalSerializer
 import com.michael.types.interval
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.date
-import kotlin.time.Duration
+import org.postgresql.util.PGInterval
 
 @Serializable
 data class Movie(
@@ -17,7 +18,8 @@ data class Movie(
     val title: String,
     val voteAverage: Double,
     val voteCount: Int,
-    val duration: Duration,
+    @Serializable(with = PGIntervalSerializer::class)
+    val duration: PGInterval,
     val price: Double,
     val genreId: Int
 )

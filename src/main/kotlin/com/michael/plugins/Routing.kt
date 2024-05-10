@@ -2,10 +2,14 @@ package com.michael.plugins
 
 import com.michael.dao.MovieDaoImpl
 import com.michael.dao.UserDaoImpl
+import com.michael.models.Movie
+import com.michael.models.MovieTable
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.insert
 
 fun Application.configureRouting() {
     routing {
@@ -28,6 +32,15 @@ fun Application.configureRouting() {
                     call.respond(HttpStatusCode.OK, movies)
                 } else {
                     call.respond(HttpStatusCode.NoContent)
+                }
+            }
+            post {
+                try {
+                    val movie = call.receive<Movie>()
+                    dao.addMovie(movie)
+                    call.respond(HttpStatusCode.OK)
+                } catch (e: Exception) {
+                    call.respondText("$e", status = HttpStatusCode.BadRequest)
                 }
             }
         }
