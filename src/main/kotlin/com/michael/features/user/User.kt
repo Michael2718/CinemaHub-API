@@ -1,4 +1,4 @@
-package com.michael.models
+package com.michael.features.user
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable

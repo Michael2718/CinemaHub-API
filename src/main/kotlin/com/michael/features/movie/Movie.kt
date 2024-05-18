@@ -1,4 +1,4 @@
-package com.michael.models
+package com.michael.features.movie
 
 import com.michael.types.PGIntervalSerializer
 import com.michael.types.interval

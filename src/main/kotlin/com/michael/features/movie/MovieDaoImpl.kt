@@ -1,7 +1,5 @@
-package com.michael.dao
+package com.michael.features.movie
 
-import com.michael.models.Movie
-import com.michael.models.MovieTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert
@@ -30,19 +28,17 @@ class MovieDaoImpl : MovieDao {
         movieInsertStatement.resultedValues?.singleOrNull()?.toMovie()
     }
 
-    private fun ResultRow.toMovie(): Movie {
-        return Movie(
-            this[MovieTable.movieId],
-            this[MovieTable.adult],
-            this[MovieTable.overview],
-            this[MovieTable.popularity],
-            this[MovieTable.releaseDate],
-            this[MovieTable.title],
-            this[MovieTable.voteAverage],
-            this[MovieTable.voteCount],
-            this[MovieTable.duration],
-            this[MovieTable.price],
-            this[MovieTable.genreId]
-        )
-    }
+    private fun ResultRow.toMovie(): Movie = Movie(
+        this[MovieTable.movieId],
+        this[MovieTable.adult],
+        this[MovieTable.overview],
+        this[MovieTable.popularity],
+        this[MovieTable.releaseDate],
+        this[MovieTable.title],
+        this[MovieTable.voteAverage],
+        this[MovieTable.voteCount],
+        this[MovieTable.duration],
+        this[MovieTable.price],
+        this[MovieTable.genreId]
+    )
 }
