@@ -12,11 +12,12 @@ CREATE TABLE movie
     plot              varchar(512) NOT NULL,
     is_adult          boolean      NOT NULL,
     popularity        int          NOT NULL,
-    price             real         NOT NULL,
+    price             money        NOT NULL,
     primary_image_url varchar(512) NULL,
 
     CONSTRAINT Movie_pk PRIMARY KEY (movie_id)
 );
+
 
 -- Table: movie
 CREATE TABLE genre
