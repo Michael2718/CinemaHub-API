@@ -9,13 +9,13 @@ import org.jetbrains.exposed.sql.kotlin.datetime.date
 @Serializable
 data class Favorite(
     val userId: Int,
-    val movieId: Int,
+    val movieId: String,
     val addedDate: LocalDate = todayDate()
 )
 
 object FavoriteTable : Table("favorite") {
     val userId = integer("user_id")
-    val movieId = integer("movie_id")
+    val movieId = varchar("movie_id", 10)
     val addedDate = date("added_date")
 
     override val primaryKey = PrimaryKey(userId, movieId)

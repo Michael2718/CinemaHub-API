@@ -12,7 +12,7 @@ import org.postgresql.util.PGInterval
 @Serializable
 data class History(
     val userId: Int,
-    val movieId: Int,
+    val movieId: String,
     val watchedDate: LocalDateTime = todayDateTime(),
     @Serializable(with = PGIntervalSerializer::class)
     val watchedDuration: PGInterval
@@ -20,7 +20,7 @@ data class History(
 
 object HistoryTable : Table("history") {
     val userId = integer("user_id")
-    val movieId = integer("movie_id")
+    val movieId = varchar("movie_id", 10)
     val watchedDate = datetime("watched_date")
     val watchedDuration = interval("watched_duration")
 

@@ -1,41 +1,45 @@
 package com.michael.features.movie
 
 import com.michael.types.PGIntervalSerializer
+import com.michael.types.PGMoneySerializer
 import com.michael.types.interval
+import com.michael.types.money
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.date
 import org.postgresql.util.PGInterval
+import org.postgresql.util.PGmoney
 
 @Serializable
 data class Movie(
-    val movieId: Int,
-    val adult: Boolean,
-    val overview: String,
-    val popularity: Int,
-    val releaseDate: LocalDate,
+    val movieId: String,
     val title: String,
-    val voteAverage: Double,
-    val voteCount: Int,
+    val releaseDate: LocalDate,
     @Serializable(with = PGIntervalSerializer::class)
     val duration: PGInterval,
-    val price: Double,
-    val genreId: Int
+    val voteAverage: Double,
+    val voteCount: Int,
+    val plot: String,
+    val isAdult: Boolean,
+    val popularity: Int,
+    @Serializable(with = PGMoneySerializer::class)
+    val price: PGmoney,
+    val primaryImageUrl: String
 )
 
 object MovieTable : Table("movie") {
-    val movieId = integer("movie_id")
-    val adult = bool("adult")
-    val overview = varchar("overview", 256)
-    val popularity = integer("popularity")
-    val releaseDate = date("release_date")
+    val movieId = varchar("movie_id", 10)
     val title = varchar("title", 256)
+    val releaseDate = date("release_date")
+    val duration = interval("duration")
     val voteAverage = double("vote_average")
     val voteCount = integer("vote_count")
-    val duration = interval("duration")
-    val price = double("price")
-    val genreId = integer("genre_id") // TODO: references GenreTable.id
+    val plot = varchar("plot", 512)
+    val isAdult = bool("is_adult")
+    val popularity = integer("popularity")
+    val price = money("price")
+    val primaryImageUrl = varchar("primary_image_url", 512)
 
     override val primaryKey = PrimaryKey(movieId)
 }

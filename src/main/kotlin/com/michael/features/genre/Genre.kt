@@ -10,7 +10,7 @@ data class Genre(
 )
 
 object GenreTable : Table("genre") {
-    val genreId = integer("genre_id")
+    val genreId = integer("genre_id").autoIncrement()
     val name = varchar("name", 50)
 
     override val primaryKey = PrimaryKey(genreId)

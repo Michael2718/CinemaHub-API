@@ -9,7 +9,6 @@ import org.jetbrains.exposed.sql.kotlin.datetime.date
 data class User(
     val id: Int,
     val username: String,
-    val passwordHash: String,
     val firstName: String,
     val lastName: String,
     val email: String,
@@ -20,7 +19,6 @@ data class User(
 object UserTable : Table("user") {
     val userId = integer("user_id").autoIncrement()
     val username = varchar("username", 30)
-    val passwordHash = varchar("password_hash", 66)
     val firstName = varchar("first_name", 50)
     val lastName = varchar("last_name", 50)
     val email = varchar("email", 256)

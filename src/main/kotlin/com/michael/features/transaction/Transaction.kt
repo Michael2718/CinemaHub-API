@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 data class Transaction(
     val transactionId: Int,
     val userId: Int,
-    val movieId: Int,
+    val movieId: String,
     val purchaseDate: LocalDateTime = todayDateTime(),
     val paymentMethod: Int
 )
@@ -18,7 +18,7 @@ data class Transaction(
 object TransactionTable : Table("transaction") {
     val transactionId = integer("transaction_id").autoIncrement()
     val userId = integer("user_id")
-    val movieId = integer("movie_id")
+    val movieId = varchar("movie_id", 10)
     val purchaseDate = datetime("purchase_date")
     val paymentMethod = integer("payment_method")
 
