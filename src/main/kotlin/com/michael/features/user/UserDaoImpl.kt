@@ -12,7 +12,6 @@ class UserDaoImpl : UserDao {
     private fun ResultRow.toUser(): User = User(
         this[UserTable.userId],
         this[UserTable.username],
-        this[UserTable.passwordHash],
         this[UserTable.firstName],
         this[UserTable.lastName],
         this[UserTable.email],
