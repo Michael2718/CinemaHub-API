@@ -1,6 +1,5 @@
 package com.michael.features.movieGenre
 
-import com.michael.features.genre.GenreTable.autoIncrement
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.Table
 
