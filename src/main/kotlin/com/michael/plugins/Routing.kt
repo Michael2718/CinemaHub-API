@@ -1,31 +1,58 @@
 package com.michael.plugins
 
-import com.michael.features.favorite.FavoriteDaoImpl
 import com.michael.features.favorite.Favorite
+import com.michael.features.favorite.FavoriteDaoImpl
 import com.michael.features.genre.GenreDaoImpl
-import com.michael.features.history.HistoryDaoImpl
 import com.michael.features.history.History
+import com.michael.features.history.HistoryDaoImpl
 import com.michael.features.movie.Movie
 import com.michael.features.movie.MovieDaoImpl
 import com.michael.features.review.ReviewDaoImpl
 import com.michael.features.transaction.TransactionDaoImpl
 import com.michael.features.user.UserDaoImpl
+import com.michael.plugins.authentication.JwtConfig
+import com.michael.plugins.authentication.isValidUser
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+
+@Serializable
+data class UserCredentials(val username: String, val password: String)
+
+fun ApplicationCall.getUserCredentials(): UserCredentials? {
+    val principal = this.principal<JWTPrincipal>() ?: return null
+    val username = principal.payload.getClaim("username").asString()
+    val password = principal.payload.getClaim("password").asString()
+    return UserCredentials(username, password)
+}
 
 fun Application.configureRouting() {
     routing {
-        favoriteRoute()
-        genreTable()
-        historyRoute()
-        movieRoute()
-        reviewRoute()
-        transactionRoute()
-        userRoute()
+        post("/login") {
+            val loginCredentials = call.receive<UserCredentials>()
+
+            if (isValidUser(loginCredentials.username, loginCredentials.password)) {
+                val token = JwtConfig.generateToken(loginCredentials.username, loginCredentials.password)
+                call.respond(mapOf("token" to token))
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+            }
+        }
+        authenticate("auth-jwt") {
+            favoriteRoute()
+            genreTable()
+            historyRoute()
+            movieRoute()
+            reviewRoute()
+            transactionRoute()
+            userRoute()
+        }
     }
 }
 
@@ -33,6 +60,15 @@ fun Route.favoriteRoute() {
     route("/favorite") {
         val dao = FavoriteDaoImpl()
         get {
+
+            val credentials = call.getUserCredentials()
+
+            if (credentials != null) {
+                DatabaseSingleton.connect(credentials.username, credentials.password)
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+            }
+
             val favoriteMovies = dao.getAll()
             if (favoriteMovies.isNotEmpty()) {
                 call.respond(HttpStatusCode.OK, favoriteMovies)
@@ -73,6 +109,15 @@ fun Route.historyRoute() {
     route("/history") {
         val dao = HistoryDaoImpl()
         get {
+            val credentials = call.getUserCredentials()
+
+            if (credentials != null) {
+                DatabaseSingleton.connectHikari(credentials.username, credentials.password)
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+            }
+
+
             val historyMovies = dao.getAll()
             if (historyMovies.isNotEmpty()) {
                 call.respond(HttpStatusCode.OK, historyMovies)
@@ -82,6 +127,14 @@ fun Route.historyRoute() {
         }
 
         post {
+            val credentials = call.getUserCredentials()
+
+            if (credentials != null) {
+                DatabaseSingleton.connectHikari(credentials.username, credentials.password)
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+            }
+
             try {
                 val historyMovie = call.receive<History>()
                 dao.addHistory(historyMovie)

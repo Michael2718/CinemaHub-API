@@ -3,7 +3,7 @@ val kotlinVersion: String by project
 val logbackVersion: String by project
 val postgresqlDriverVersion: String by project
 val exposedVersion: String by project
-val h2Version: String by project
+val hikaricpVersion: String by project
 
 plugins {
     kotlin("jvm") version "1.9.24"
@@ -26,20 +26,22 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm")
-    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth:$ktorVersion")
+    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
+
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
 
     implementation("org.postgresql:postgresql:$postgresqlDriverVersion")
-
-    implementation("com.h2database:h2:$h2Version")
 
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion")
 
+    implementation("com.zaxxer:HikariCP:$hikaricpVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 

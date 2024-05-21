@@ -1,6 +1,9 @@
 package com.michael
 
-import com.michael.plugins.*
+import com.michael.plugins.authentication.configureAuthentication
+import com.michael.plugins.configureDatabases
+import com.michael.plugins.configureRouting
+import com.michael.plugins.configureSerialization
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {
@@ -8,7 +11,8 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    configureSerialization()
+    configureAuthentication()
     configureDatabases()
     configureRouting()
+    configureSerialization()
 }
