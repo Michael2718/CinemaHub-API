@@ -46,12 +46,12 @@ data class Credentials(val username: String, val password: String)
 
 fun Credentials.toPair() = this.username to this.password
 
-fun ApplicationCall.getUserCredentials(): Credentials? {
-    val principal = this.principal<JWTPrincipal>() ?: return null
-    val username = principal.payload.getClaim("username").asString()
-    val password = principal.payload.getClaim("password").asString()
-    return Credentials(username, password)
-}
+//fun ApplicationCall.getUserCredentials(): Credentials? {
+//    val principal = this.principal<JWTPrincipal>() ?: return null
+//    val username = principal.payload.getClaim("username").asString()
+//    val password = principal.payload.getClaim("password").asString()
+//    return Credentials(username, password)
+//}
 
 fun isValidUser(credentials: Credentials): Boolean {
     try {
