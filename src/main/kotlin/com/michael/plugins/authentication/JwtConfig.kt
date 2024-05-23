@@ -1,6 +1,7 @@
 package com.michael.plugins.authentication
 
 import com.auth0.jwt.JWT
+import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.server.config.*
 import java.util.*
@@ -21,20 +22,20 @@ object JwtConfig {
     private val algorithm: Algorithm
         get() = Algorithm.HMAC256(secret)
 
-    val verifier
+    val verifier: JWTVerifier
         get() = JWT
             .require(algorithm)
             .withAudience(audience)
             .withIssuer(issuer)
             .build()
 
-    fun generateToken(username: String, password: String): String {
+    fun generateToken(credentials: Credentials): String {
         return JWT.create()
             .withAudience(audience)
             .withIssuer(issuer)
-            .withClaim("username", username)
-            .withClaim("password", password)
-            .withExpiresAt(Date(System.currentTimeMillis() + 600000000000)) // 1 minute expiry
+            .withClaim("username", credentials.username)
+            .withClaim("password", credentials.password)
+            .withExpiresAt(Date(System.currentTimeMillis() + 1209600000))
             .sign(algorithm)
     }
 }

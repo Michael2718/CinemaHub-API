@@ -6,6 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Application.configureAuthentication() {
@@ -20,30 +21,41 @@ fun Application.configureAuthentication() {
             realm = myRealm
             verifier(JwtConfig.verifier)
             validate { jwtCredential ->
-                if (jwtCredential.payload.getClaim("username").asString().isNotEmpty()) {
-                    JWTPrincipal(jwtCredential.payload)
-                } else {
-                    null
+                val username = jwtCredential.payload.getClaim("username").asString()
+                val password = jwtCredential.payload.getClaim("password").asString()
+
+                if (username.isEmpty() || password.isEmpty()) return@validate null
+
+                try {
+                    DatabaseSingleton.connectHikari(Credentials(username, password))
+                } catch (e: Exception) {
+                    return@validate null
                 }
-            }
-            validate { jwtCredential ->
-                if (jwtCredential.payload.getClaim("password").asString().isNotEmpty()) {
-                    JWTPrincipal(jwtCredential.payload)
-                } else {
-                    null
-                }
+
+                JWTPrincipal(jwtCredential.payload)
             }
             challenge { _, _ ->
                 call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
             }
         }
     }
-
 }
 
-fun isValidUser(username: String, password: String): Boolean {
+@Serializable
+data class Credentials(val username: String, val password: String)
+
+fun Credentials.toPair() = this.username to this.password
+
+fun ApplicationCall.getUserCredentials(): Credentials? {
+    val principal = this.principal<JWTPrincipal>() ?: return null
+    val username = principal.payload.getClaim("username").asString()
+    val password = principal.payload.getClaim("password").asString()
+    return Credentials(username, password)
+}
+
+fun isValidUser(credentials: Credentials): Boolean {
     try {
-        val db = DatabaseSingleton.connect(username, password)
+        val db = DatabaseSingleton.connectHikari(credentials)
         transaction(db) {
             exec("SELECT 1") {}
         }

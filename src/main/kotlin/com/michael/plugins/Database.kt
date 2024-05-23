@@ -1,5 +1,7 @@
 package com.michael.plugins
 
+import com.michael.plugins.authentication.Credentials
+import com.michael.plugins.authentication.toPair
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
@@ -17,26 +19,26 @@ object DatabaseSingleton {
         this.config = config
     }
 
-    fun connect(username: String, password: String): Database = Database.connect(
-        url = config.property("postgres.url").getString(),
-        driver = config.property("postgres.driver").getString(),
-        user = username,
-        password = password
-    )
+//    fun connectExposed(username: String, password: String): Database = Database.connect(
+//        url = config.property("postgres.url").getString(),
+//        driver = config.property("postgres.driver").getString(),
+//        user = username,
+//        password = password
+//    )
 
-    fun connectHikari(username: String, password: String): Database =
-        Database.connect(createHikariDataSource(username to password))
+    fun connectHikari(credentials: Credentials): Database =
+        Database.connect(createHikariDataSource(credentials))
 
-    private fun createHikariDataSource(key: Pair<String, String>): HikariDataSource =
-        dataSourceMap.computeIfAbsent(key) {
+    private fun createHikariDataSource(credentials: Credentials): HikariDataSource =
+        dataSourceMap.computeIfAbsent(credentials.toPair()) {
             HikariDataSource(
                 HikariConfig().apply {
                     driverClassName = config.property("postgres.driver").getString()
                     jdbcUrl = config.property("postgres.url").getString()
                     maximumPoolSize = 1
                     isAutoCommit = false
-                    this.username = username
-                    this.password = password
+                    username = credentials.username
+                    password = credentials.password
                     transactionIsolation = "TRANSACTION_READ_COMMITTED"
                     validate()
                 }
