@@ -1,9 +1,7 @@
 package com.michael.features.favorite
 
 import com.michael.utils.todayDate
-import com.typesafe.config.Optional
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.SerialInfo
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.date
