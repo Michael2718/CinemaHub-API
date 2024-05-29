@@ -1,7 +1,7 @@
 package com.michael.plugins
 
 import com.michael.features.favorite.Favorite
-import com.michael.features.favorite.FavoriteDaoImpl
+import com.michael.features.favorite.FavoritesDaoImpl
 import com.michael.features.genre.GenreDaoImpl
 import com.michael.features.history.History
 import com.michael.features.history.HistoryDaoImpl
@@ -25,7 +25,7 @@ fun Application.configureRouting() {
     routing {
         loginRoute()
         authenticate("auth-jwt") {
-            favoriteRoute()
+            favoritesRoute()
             genreTable()
             historyRoute()
             movieRoute()
@@ -49,15 +49,27 @@ fun Route.loginRoute() {
     }
 }
 
-fun Route.favoriteRoute() {
+fun Route.favoritesRoute() {
     route("/favorite") {
-        val dao = FavoriteDaoImpl()
-        get {
-            val favoriteMovies = dao.getAll()
-            if (favoriteMovies.isNotEmpty()) {
-                call.respond(HttpStatusCode.OK, favoriteMovies)
-            } else {
-                call.respond(HttpStatusCode.NoContent)
+        val dao = FavoritesDaoImpl()
+
+        get("{user_id}") {
+            val userId = call.parameters["user_id"]?.toIntOrNull()
+
+            if (userId == null) {
+                call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val favorites = dao.getByUserId(userId)
+
+            when {
+                favorites.isEmpty() -> call.respondText(
+                    "Favorite list is empty for user $userId",
+                    status = HttpStatusCode.BadRequest
+                )
+
+                else -> call.respond(HttpStatusCode.OK, favorites)
             }
         }
 
@@ -92,12 +104,32 @@ fun Route.genreTable() {
 fun Route.historyRoute() {
     route("/history") {
         val dao = HistoryDaoImpl()
-        get {
-            val historyMovies = dao.getAll()
-            if (historyMovies.isNotEmpty()) {
-                call.respond(HttpStatusCode.OK, historyMovies)
-            } else {
-                call.respond(HttpStatusCode.NoContent)
+//        get {
+//            val historyMovies = dao.getAll()
+//            if (historyMovies.isNotEmpty()) {
+//                call.respond(HttpStatusCode.OK, historyMovies)
+//            } else {
+//                call.respond(HttpStatusCode.NoContent)
+//            }
+//        }
+
+        get("{user_id}") {
+            val userId = call.parameters["user_id"]?.toIntOrNull()
+
+            if (userId == null) {
+                call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val history = dao.getByUserId(userId)
+
+            when {
+                history.isEmpty() -> call.respondText(
+                    "History list is empty for user $userId",
+                    status = HttpStatusCode.BadRequest
+                )
+
+                else -> call.respond(HttpStatusCode.OK, history)
             }
         }
 
@@ -121,7 +153,8 @@ fun Route.movieRoute() {
         get {
             val movies = dao.getAll()
             if (movies.isNotEmpty()) {
-                call.respond(HttpStatusCode.OK, movies)
+//                call.respond(HttpStatusCode.OK, movies)
+                call.respond(HttpStatusCode.OK, mapOf("items" to movies))
             } else {
                 call.respond(HttpStatusCode.NoContent)
             }
@@ -169,13 +202,47 @@ fun Route.transactionRoute() {
 fun Route.userRoute() {
     route("/user") {
         val dao = UserDaoImpl()
-        get {
-            val users = dao.getAll()
-            if (users.isNotEmpty()) {
-                call.respond(HttpStatusCode.OK, users)
-            } else {
-                call.respond(HttpStatusCode.NoContent)
+//        get {
+//            val users = dao.getAll()
+//            if (users.isNotEmpty()) {
+//                call.respond(HttpStatusCode.OK, users)
+//            } else {
+//                call.respond(HttpStatusCode.NoContent)
+//            }
+//        }
+        get("{user_id}") {
+            val userId = call.parameters["user_id"]?.toIntOrNull()
+
+            if (userId == null) {
+                call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+                return@get
             }
+
+            val user = dao.getByUserId(userId)
+            when {
+                user == null -> call.respondText(
+                    "User not found",
+                    status = HttpStatusCode.BadRequest
+                )
+                else -> call.respond(HttpStatusCode.OK, user)
+            }
+        }
+
+        get {
+            val username = call.request.queryParameters["username"] ?: return@get call.respondText(
+                "Missing username",
+                status = HttpStatusCode.BadRequest
+            )
+
+            val user = dao.getByUsername(username) ?: return@get call.respondText(
+                "User not found",
+                status = HttpStatusCode.BadRequest
+            )
+
+            call.respond(
+                status = HttpStatusCode.OK,
+                user
+            )
         }
     }
 }

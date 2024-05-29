@@ -9,6 +9,18 @@ class UserDaoImpl : UserDao {
         UserTable.selectAll().map { it.toUser() }
     }
 
+    override suspend fun getByUserId(userId: Int): User? = dbQuery {
+        val query = UserTable.selectAll().where { UserTable.userId eq userId }
+
+        query.map { it.toUser() }.singleOrNull()
+    }
+
+    override suspend fun getByUsername(username: String): User? = dbQuery {
+        val query = UserTable.selectAll().where { UserTable.username eq username }
+
+        query.map { it.toUser() }.singleOrNull()
+    }
+
     private fun ResultRow.toUser(): User = User(
         this[UserTable.userId],
         this[UserTable.username],

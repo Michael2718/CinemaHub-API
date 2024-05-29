@@ -10,6 +10,13 @@ class HistoryDaoImpl : HistoryDao {
         HistoryTable.selectAll().map { it.toHistory() }
     }
 
+    override suspend fun getByUserId(userId: Int): List<History> = dbQuery {
+        HistoryTable
+            .selectAll()
+            .where { HistoryTable.userId eq userId }
+            .map { it.toHistory() }
+    }
+
     override suspend fun addHistory(history: History): History? = dbQuery {
         val historyInsertStatement = HistoryTable.insert {
             it[userId] = history.userId

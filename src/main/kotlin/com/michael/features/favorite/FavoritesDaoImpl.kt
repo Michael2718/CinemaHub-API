@@ -5,13 +5,20 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 
-class FavoriteDaoImpl : FavoriteDao {
+class FavoritesDaoImpl : FavoritesDao {
     override suspend fun getAll(): List<Favorite> = dbQuery {
-        FavoriteTable.selectAll().map { it.toFavorite() }
+        FavoritesTable.selectAll().map { it.toFavorite() }
+    }
+
+    override suspend fun getByUserId(userId: Int): List<Favorite> = dbQuery {
+        FavoritesTable
+            .selectAll()
+            .where { FavoritesTable.userId eq userId }
+            .map { it.toFavorite() }
     }
 
     override suspend fun addFavorite(favorite: Favorite): Favorite? = dbQuery {
-        val favoriteInsertStatement = FavoriteTable.insert {
+        val favoriteInsertStatement = FavoritesTable.insert {
             it[userId] = favorite.userId
             it[movieId] = favorite.movieId
             it[addedDate] = favorite.addedDate
@@ -21,8 +28,8 @@ class FavoriteDaoImpl : FavoriteDao {
     }
 
     private fun ResultRow.toFavorite(): Favorite = Favorite(
-        this[FavoriteTable.userId],
-        this[FavoriteTable.movieId],
-        this[FavoriteTable.addedDate]
+        this[FavoritesTable.userId],
+        this[FavoritesTable.movieId],
+        this[FavoritesTable.addedDate]
     )
 }
