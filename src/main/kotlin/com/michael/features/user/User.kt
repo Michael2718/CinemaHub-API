@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.date
 
 @Serializable
 data class User(
-    val id: Int,
+    val userId: Int,
     val username: String,
     val firstName: String,
     val lastName: String,
