@@ -1,5 +1,6 @@
 package com.michael.features.history
 
+import com.michael.features.movie.Movie
 import com.michael.types.PGIntervalSerializer
 import com.michael.types.interval
 import com.michael.utils.todayDateTime
@@ -14,6 +15,14 @@ data class History(
     val userId: Int,
     val movieId: String,
     val watchedDate: LocalDateTime = todayDateTime(),
+    @Serializable(with = PGIntervalSerializer::class)
+    val watchedDuration: PGInterval
+)
+
+@Serializable
+data class HistoryResponse(
+    val movie: Movie,
+    val watchedDate: LocalDateTime,
     @Serializable(with = PGIntervalSerializer::class)
     val watchedDuration: PGInterval
 )

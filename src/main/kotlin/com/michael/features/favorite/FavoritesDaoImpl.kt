@@ -1,6 +1,9 @@
 package com.michael.features.favorite
 
+import com.michael.features.movie.Movie
+import com.michael.features.movie.MovieTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
@@ -10,11 +13,17 @@ class FavoritesDaoImpl : FavoritesDao {
         FavoritesTable.selectAll().map { it.toFavorite() }
     }
 
-    override suspend fun getByUserId(userId: Int): List<Favorite> = dbQuery {
+    override suspend fun getByUserId(userId: Int): List<FavoriteResponse> = dbQuery {
         FavoritesTable
+            .join(
+                MovieTable,
+                JoinType.INNER,
+                onColumn = FavoritesTable.movieId,
+                otherColumn = MovieTable.movieId
+            )
             .selectAll()
             .where { FavoritesTable.userId eq userId }
-            .map { it.toFavorite() }
+            .map { it.toFavoriteResponse() }
     }
 
     override suspend fun addFavorite(favorite: Favorite): Favorite? = dbQuery {
@@ -31,5 +40,22 @@ class FavoritesDaoImpl : FavoritesDao {
         this[FavoritesTable.userId],
         this[FavoritesTable.movieId],
         this[FavoritesTable.addedDate]
+    )
+
+    private fun ResultRow.toFavoriteResponse(): FavoriteResponse = FavoriteResponse(
+        movie = Movie(
+            this[MovieTable.movieId],
+            this[MovieTable.title],
+            this[MovieTable.releaseDate],
+            this[MovieTable.duration],
+            this[MovieTable.voteAverage],
+            this[MovieTable.voteCount],
+            this[MovieTable.plot],
+            this[MovieTable.isAdult],
+            this[MovieTable.popularity],
+            this[MovieTable.price],
+            this[MovieTable.primaryImageUrl]
+        ),
+        addedDate = this[FavoritesTable.addedDate]
     )
 }

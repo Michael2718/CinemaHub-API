@@ -50,7 +50,7 @@ fun Route.loginRoute() {
 }
 
 fun Route.favoritesRoute() {
-    route("/favorite") {
+    route("/favorites") {
         val dao = FavoritesDaoImpl()
 
         get("{user_id}") {

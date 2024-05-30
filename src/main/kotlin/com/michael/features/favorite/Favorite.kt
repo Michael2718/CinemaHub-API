@@ -1,5 +1,6 @@
 package com.michael.features.favorite
 
+import com.michael.features.movie.Movie
 import com.michael.utils.todayDate
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
@@ -12,6 +13,13 @@ data class Favorite(
     val movieId: String,
     val addedDate: LocalDate = todayDate()
 )
+
+@Serializable
+data class FavoriteResponse(
+    val movie: Movie,
+    val addedDate: LocalDate
+)
+
 
 object FavoritesTable : Table("favorite") {
     val userId = integer("user_id")
