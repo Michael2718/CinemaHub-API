@@ -10,6 +10,12 @@ class MovieDaoImpl : MovieDao {
         MovieTable.selectAll().map { it.toMovie() }
     }
 
+    override suspend fun getByMovieId(movieId: String): Movie? = dbQuery {
+        val query = MovieTable.selectAll().where { MovieTable.movieId eq movieId }
+
+        query.map { it.toMovie() }.singleOrNull()
+    }
+
     override suspend fun addMovie(movie: Movie): Movie? = dbQuery {
         val movieInsertStatement = MovieTable.insert {
             it[movieId] = movie.movieId

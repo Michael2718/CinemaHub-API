@@ -150,15 +150,34 @@ fun Route.historyRoute() {
 fun Route.movieRoute() {
     route("/movie") {
         val dao = MovieDaoImpl()
-        get {
-            val movies = dao.getAll()
-            if (movies.isNotEmpty()) {
-//                call.respond(HttpStatusCode.OK, movies)
-                call.respond(HttpStatusCode.OK, mapOf("items" to movies))
-            } else {
-                call.respond(HttpStatusCode.NoContent)
+//        get {
+//            val movies = dao.getAll()
+//            if (movies.isNotEmpty()) {
+////                call.respond(HttpStatusCode.OK, movies)
+//                call.respond(HttpStatusCode.OK, mapOf("items" to movies))
+//            } else {
+//                call.respond(HttpStatusCode.NoContent)
+//            }
+//        }
+
+        get("{movie_id}") {
+            val movieId = call.parameters["movie_id"]
+
+            if (movieId.isNullOrEmpty()) {
+                call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val movie = dao.getByMovieId(movieId)
+            when {
+                movie == null -> call.respondText(
+                    "Movie not found",
+                    status = HttpStatusCode.BadRequest
+                )
+                else -> call.respond(HttpStatusCode.OK, movie)
             }
         }
+
         post {
             try {
                 val movie = call.receive<Movie>()
