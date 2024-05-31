@@ -7,9 +7,8 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.IColumnType
-import org.jetbrains.exposed.sql.Table
+import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.sql.*
 import org.postgresql.util.PGmoney
 
 object MoneyColumnType : IColumnType<PGmoney> {
@@ -64,6 +63,37 @@ object PGMoneySerializer : KSerializer<PGmoney> {
             return PGmoney(moneyDouble)
         } catch (e: NumberFormatException) {
             throw SerializationException("Error parsing money: ${e.message}")
+        }
+    }
+}
+
+fun parsePGMoney(moneyString: String): PGmoney {
+    val json = Json { ignoreUnknownKeys = true }
+    return json.decodeFromString(PGMoneySerializer, moneyString)
+}
+
+class PGMoneyGreaterEqOp(
+    private val left: Column<PGmoney>,
+    private val right: PGmoney
+) : Op<Boolean>() {
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+        queryBuilder {
+            append(left)
+            append(" >= ")
+            append("'${right.`val`}'")
+        }
+    }
+}
+
+class PGMoneyLessEqOp(
+    private val left: Column<PGmoney>,
+    private val right: PGmoney
+) : Op<Boolean>() {
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+        queryBuilder {
+            append(left)
+            append(" <= ")
+            append("'${right.`val`}'")
         }
     }
 }

@@ -8,11 +8,14 @@ import com.michael.features.history.HistoryDaoImpl
 import com.michael.features.movie.Movie
 import com.michael.features.movie.MovieDaoImpl
 import com.michael.features.review.ReviewDaoImpl
+import com.michael.features.search.SearchDaoImpl
 import com.michael.features.transaction.TransactionDaoImpl
 import com.michael.features.user.UserDaoImpl
 import com.michael.plugins.authentication.Credentials
 import com.michael.plugins.authentication.JwtConfig
 import com.michael.plugins.authentication.isValidUser
+import com.michael.types.parsePGInterval
+import com.michael.types.parsePGMoney
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -26,6 +29,7 @@ fun Application.configureRouting() {
     routing {
         loginRoute()
         authenticate("auth-jwt") {
+            searchRoute()
             favoritesRoute()
             genreTable()
             historyRoute()
@@ -50,29 +54,54 @@ fun Route.loginRoute() {
     }
 }
 
-fun Route.favoritesRoute() {
-    route("/favorites") {
-        val dao = FavoritesDaoImpl()
+fun Route.searchRoute() {
+    route("/search") {
+        val dao = SearchDaoImpl()
 
-        get("{user_id}") {
-            val userId = call.parameters["user_id"]?.toIntOrNull()
+        get {
+            val query = call.request.queryParameters["query"]
+            val minVoteAverage = call.request.queryParameters["minVoteAverage"]?.toDoubleOrNull()
+            val maxVoteAverage = call.request.queryParameters["maxVoteAverage"]?.toDoubleOrNull()
+            val minReleaseDate = call.request.queryParameters["minReleaseDate"]?.let { LocalDate.parse(it) }
+            val maxReleaseDate = call.request.queryParameters["maxReleaseDate"]?.let { LocalDate.parse(it) }
+            val minDuration = call.request.queryParameters["minDuration"]?.let { parsePGInterval(it) }
+            val maxDuration = call.request.queryParameters["maxDuration"]?.let { parsePGInterval(it) }
 
-            if (userId == null) {
-                call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+            val minPrice = call.request.queryParameters["minPrice"]?.let { parsePGMoney(it) }
+            val maxPrice = call.request.queryParameters["maxPrice"]?.let { parsePGMoney(it) }
+
+
+            val isAdult = call.request.queryParameters["isAdult"]?.toBooleanStrictOrNull()
+
+            if (query == null) {
+                call.respondText(
+                    "Missing query parameter",
+                    status = HttpStatusCode.BadRequest
+                )
                 return@get
             }
 
-            val favorites = dao.getByUserId(userId)
+            val movies = dao.searchMovies(
+                query = query,
+                minVoteAverage = minVoteAverage,
+                maxVoteAverage = maxVoteAverage,
+                minReleaseDate = minReleaseDate,
+                maxReleaseDate = maxReleaseDate,
+                minDuration = minDuration,
+                maxDuration = maxDuration,
+                minPrice = minPrice,
+                maxPrice = maxPrice,
+                isAdult = isAdult
+            )
 
-            when {
-                favorites.isEmpty() -> call.respondText(
-                    "Favorite list is empty for user $userId",
-                    status = HttpStatusCode.BadRequest
-                )
-
-                else -> call.respond(HttpStatusCode.OK, favorites)
-            }
+            call.respond(HttpStatusCode.OK, movies)
         }
+    }
+}
+
+fun Route.favoritesRoute() {
+    route("/favorites") {
+        val dao = FavoritesDaoImpl()
 
         post {
             try {

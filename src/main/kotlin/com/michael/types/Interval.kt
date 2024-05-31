@@ -7,9 +7,8 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.IColumnType
-import org.jetbrains.exposed.sql.Table
+import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.sql.*
 import org.postgresql.util.PGInterval
 
 object IntervalColumnType : IColumnType<PGInterval> {
@@ -67,6 +66,37 @@ object PGIntervalSerializer : KSerializer<PGInterval> {
             return PGInterval(years, months, days, hours, minutes, seconds)
         } catch (e: NumberFormatException) {
             throw SerializationException("Error parsing interval parts: ${e.message}")
+        }
+    }
+}
+
+fun parsePGInterval(intervalString: String): PGInterval {
+    val json = Json { ignoreUnknownKeys = true }
+    return json.decodeFromString(PGIntervalSerializer, intervalString)
+}
+
+class PGIntervalGreaterEqOp(
+    private val left: Column<PGInterval>,
+    private val right: PGInterval
+) : Op<Boolean>() {
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+        queryBuilder {
+            append(left)
+            append(" >= ")
+            append("'${right.value}'")
+        }
+    }
+}
+
+class PGIntervalLessEqOp(
+    private val left: Column<PGInterval>,
+    private val right: PGInterval
+) : Op<Boolean>() {
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+        queryBuilder {
+            append(left)
+            append(" <= ")
+            append("'${right.value}'")
         }
     }
 }
