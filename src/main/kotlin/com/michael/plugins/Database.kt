@@ -9,12 +9,11 @@ import io.ktor.server.config.*
 import kotlinx.coroutines.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import java.util.concurrent.ConcurrentHashMap
 
 object DatabaseSingleton {
     private lateinit var config: ApplicationConfig
-    private val dataSourceMap = ConcurrentHashMap<Pair<String, String>, HikariDataSource>()
-    private val lastAccessMap = ConcurrentHashMap<Pair<String, String>, Long>()
+    private val dataSourceMap = mutableMapOf<Pair<String, String>, HikariDataSource>()
+    private val lastAccessMap = mutableMapOf<Pair<String, String>, Long>()
     private var idleTimeout: Long = 10000
     private var cleanupInterval: Long = 30000
     private lateinit var cleanupJob: Job
@@ -28,12 +27,15 @@ object DatabaseSingleton {
         startCleanupTask(coroutineScope)
     }
 
-    fun connectHikari(credentials: Credentials): Database =
-        Database.connect(createHikariDataSource(credentials))
+    fun connectHikari(credentials: Credentials): Database {
+        val ds = createHikariDataSource(credentials)
+        return Database.connect(ds)
+    }
 
     private fun createHikariDataSource(credentials: Credentials): HikariDataSource {
         val key = credentials.toPair()
         lastAccessMap[key] = System.currentTimeMillis()
+        currentCredentials.set(credentials)
         return dataSourceMap.computeIfAbsent(key) {
             HikariDataSource(
                 HikariConfig().apply {
@@ -51,7 +53,7 @@ object DatabaseSingleton {
     }
 
     private fun startCleanupTask(coroutineScope: CoroutineScope) {
-        cleanupJob = coroutineScope.launch {
+        cleanupJob = coroutineScope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay(cleanupInterval)
                 val currentTime = System.currentTimeMillis()
@@ -68,7 +70,21 @@ object DatabaseSingleton {
         }
     }
 
-    suspend fun <T> dbQuery(block: suspend () -> T): T = newSuspendedTransaction(Dispatchers.IO) { block() }
+    private val currentCredentials = ThreadLocal<Credentials>()
+
+    private fun getCurrentCredentials(): Credentials {
+        return currentCredentials.get() ?: throw IllegalStateException("No credentials set in the current context")
+    }
+
+    suspend fun <T> dbQuery(block: suspend () -> T): T {
+        val credentials = getCurrentCredentials()
+        val database = Database.connect(createHikariDataSource(credentials))
+        return newSuspendedTransaction(Dispatchers.IO, database) {
+            block()
+        }
+    }
+
+//    suspend fun <T> dbQuery(block: suspend () -> T): T = newSuspendedTransaction(Dispatchers.IO) { block() }
 }
 
 fun Application.configureDatabases() {
