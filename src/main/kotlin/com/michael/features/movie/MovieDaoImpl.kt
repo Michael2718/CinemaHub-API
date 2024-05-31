@@ -33,18 +33,18 @@ class MovieDaoImpl : MovieDao {
 
         movieInsertStatement.resultedValues?.singleOrNull()?.toMovie()
     }
-
-    private fun ResultRow.toMovie(): Movie = Movie(
-        this[MovieTable.movieId],
-        this[MovieTable.title],
-        this[MovieTable.releaseDate],
-        this[MovieTable.duration],
-        this[MovieTable.voteAverage],
-        this[MovieTable.voteCount],
-        this[MovieTable.plot],
-        this[MovieTable.isAdult],
-        this[MovieTable.popularity],
-        this[MovieTable.price],
-        this[MovieTable.primaryImageUrl]
-    )
 }
+
+fun ResultRow.toMovie(): Movie = Movie(
+    this[MovieTable.movieId],
+    this[MovieTable.title],
+    this[MovieTable.releaseDate],
+    this[MovieTable.duration],
+    this[MovieTable.voteAverage],
+    this[MovieTable.voteCount],
+    this[MovieTable.plot],
+    this[MovieTable.isAdult],
+    this[MovieTable.popularity],
+    this[MovieTable.price],
+    this[MovieTable.primaryImageUrl]
+)

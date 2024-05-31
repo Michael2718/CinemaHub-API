@@ -7,4 +7,7 @@ interface FavoritesDao {
     suspend fun addFavorite(
         favorite: Favorite
     ): Favorite?
+
+    suspend fun deleteFavorite(userId: Int, movieId: String): Boolean
+    suspend fun deleteAllFavorites(userId: Int): Boolean
 }

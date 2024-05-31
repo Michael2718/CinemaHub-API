@@ -3,14 +3,20 @@ package com.michael.features.favorite
 import com.michael.features.movie.Movie
 import com.michael.features.movie.MovieTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class FavoritesDaoImpl : FavoritesDao {
     override suspend fun getAll(): List<Favorite> = dbQuery {
         FavoritesTable.selectAll().map { it.toFavorite() }
+    }
+
+    override suspend fun deleteFavorite(userId: Int, movieId: String): Boolean = dbQuery {
+        FavoritesTable.deleteWhere { (FavoritesTable.userId eq userId) and (FavoritesTable.movieId eq movieId) } != 0
+    }
+
+    override suspend fun deleteAllFavorites(userId: Int): Boolean = dbQuery {
+        FavoritesTable.deleteWhere { FavoritesTable.userId eq userId } != 0
     }
 
     override suspend fun getByUserId(userId: Int): List<FavoriteResponse> = dbQuery {

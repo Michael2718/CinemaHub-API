@@ -19,6 +19,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 
 fun Application.configureRouting() {
@@ -83,6 +84,68 @@ fun Route.favoritesRoute() {
             } catch (e: Exception) {
                 call.respondText("$e", status = HttpStatusCode.BadRequest)
             }
+        }
+
+        route("{user_id}") {
+            get {
+                val userId = call.parameters["user_id"]?.toIntOrNull()
+
+                if (userId == null) {
+                    call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+                    return@get
+                }
+
+                val favorites = dao.getByUserId(userId)
+
+                call.respond(HttpStatusCode.OK, favorites)
+            }
+
+            delete {
+                val userId = call.parameters["user_id"]?.toIntOrNull()
+
+                if (userId == null) {
+                    call.respondText("Missing or invalid userId", status = HttpStatusCode.BadRequest)
+                    return@delete
+                }
+
+                val isDeleted = dao.deleteAllFavorites(userId)
+
+                if (isDeleted) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respondText(
+                        "No such user",
+                        status = HttpStatusCode.BadRequest
+                    )
+                }
+            }
+
+            delete("{movie_id}") {
+                val userId = call.parameters["user_id"]?.toIntOrNull()
+                val movieId = call.parameters["movie_id"]
+
+                if (userId == null) {
+                    call.respondText("Missing or invalid userId", status = HttpStatusCode.BadRequest)
+                    return@delete
+                }
+
+                if (movieId == null) {
+                    call.respondText("Missing or invalid movieId", status = HttpStatusCode.BadRequest)
+                    return@delete
+                }
+
+                val isDeleted = dao.deleteFavorite(userId = userId, movieId = movieId)
+
+                if (isDeleted) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respondText(
+                        "No such user or movie",
+                        status = HttpStatusCode.BadRequest
+                    )
+                }
+            }
+
         }
     }
 }
@@ -174,6 +237,7 @@ fun Route.movieRoute() {
                     "Movie not found",
                     status = HttpStatusCode.BadRequest
                 )
+
                 else -> call.respond(HttpStatusCode.OK, movie)
             }
         }
@@ -243,6 +307,7 @@ fun Route.userRoute() {
                     "User not found",
                     status = HttpStatusCode.BadRequest
                 )
+
                 else -> call.respond(HttpStatusCode.OK, user)
             }
         }
