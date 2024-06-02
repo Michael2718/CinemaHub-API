@@ -1,7 +1,6 @@
 package com.michael.features.search
 
 import com.michael.features.favorite.FavoritesTable
-import com.michael.features.favorite.FavoritesTable.bool
 import com.michael.features.movie.MovieTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import com.michael.types.PGIntervalGreaterEqOp
@@ -10,8 +9,6 @@ import com.michael.types.PGMoneyGreaterEqOp
 import com.michael.types.PGMoneyLessEqOp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.asLiteral
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.case
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq

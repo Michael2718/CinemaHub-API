@@ -1,6 +1,5 @@
 package com.michael.features.search
 
-import com.michael.features.movie.Movie
 import com.michael.types.PGIntervalSerializer
 import com.michael.types.PGMoneySerializer
 import kotlinx.datetime.LocalDate

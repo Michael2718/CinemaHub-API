@@ -1,6 +1,5 @@
 package com.michael.features.search
 
-import com.michael.features.movie.Movie
 import kotlinx.datetime.LocalDate
 import org.postgresql.util.PGInterval
 import org.postgresql.util.PGmoney
