@@ -1,6 +1,5 @@
 -- tables
-
--- Table: favorite
+-- Table: movie
 CREATE TABLE movie
 (
     movie_id          varchar(10)  NOT NULL,
@@ -18,8 +17,7 @@ CREATE TABLE movie
     CONSTRAINT Movie_pk PRIMARY KEY (movie_id)
 );
 
-
--- Table: movie
+-- Table: genre
 CREATE TABLE genre
 (
     genre_id serial,
@@ -27,7 +25,7 @@ CREATE TABLE genre
     CONSTRAINT Genre_pk PRIMARY KEY (genre_id)
 );
 
--- Table: genre
+-- Table: movie_genre
 CREATE TABLE movie_genre
 (
     movie_id varchar(10),
@@ -92,7 +90,6 @@ CREATE TABLE "user"
 (
     user_id      serial,
     username     varchar(30)  NOT NULL UNIQUE CHECK (username <> ''),
---     password_hash char(66)     NOT NULL, -- SHA_256 hash
     first_name   varchar(50)  NOT NULL CHECK (first_name <> ''),
     last_name    varchar(50)  NOT NULL CHECK (last_name <> ''),
     email        varchar(256) NOT NULL UNIQUE CHECK (email ~* '^[A-Za-z0-9._+%-]+@[A-Za-z0-9.-]+[.][A-Za-z]+$'),
@@ -210,3 +207,37 @@ CREATE TRIGGER check_watched_duration_trigger
     ON history
     FOR EACH ROW
 EXECUTE FUNCTION check_watched_duration();
+
+-- Views:
+CREATE OR REPLACE VIEW movie_search AS
+WITH favorite_movies AS (SELECT u.user_id,
+                                ARRAY(SELECT m.title
+                                      FROM history h
+                                               JOIN movie m ON h.movie_id = m.movie_id
+                                      WHERE u.user_id = h.user_id
+                                      GROUP BY m.title
+                                      ORDER BY COUNT(*) DESC
+                                      LIMIT 3) AS favorite_movies
+                         FROM "user" u
+                         GROUP BY u.user_id),
+     least_watched_genres AS (SELECT u.user_id,
+                                     ARRAY(SELECT g.name
+                                           FROM genre g
+                                                    LEFT JOIN movie m ON g.genre_id = m.genre_id
+                                           WHERE NOT EXISTS (SELECT 1
+                                                             FROM history h
+                                                             WHERE u.user_id = h.user_id
+                                                               AND h.movie_id = m.movie_id)
+                                           LIMIT 2) AS least_watched_genres
+                              FROM "user" u
+                              GROUP BY u.user_id)
+SELECT m.*,
+       u.username,
+       fm.favorite_movies,
+       lwg.least_watched_genres,
+       pmv.period_more_than_5_views
+FROM "movie" m
+    LEFT JOIN fa fm ON u.user_id = fm.user_id
+--          LEFT JOIN least_watched_genres lwg ON u.user_id = lwg.user_id
+--          LEFT JOIN period_more_than_5_views pmv ON u.user_id = pmv.user_id
+ORDER BY u.user_id;

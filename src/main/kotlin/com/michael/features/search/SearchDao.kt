@@ -6,6 +6,19 @@ import org.postgresql.util.PGInterval
 import org.postgresql.util.PGmoney
 
 interface SearchDao {
+//    suspend fun searchMovies(
+//        query: String?,
+//        minVoteAverage: Double?,
+//        maxVoteAverage: Double?,
+//        minReleaseDate: LocalDate?,
+//        maxReleaseDate: LocalDate?,
+//        minDuration: PGInterval?,
+//        maxDuration: PGInterval?,
+//        minPrice: PGmoney?,
+//        maxPrice: PGmoney?,
+//        isAdult: Boolean?
+//    ): List<Movie>
+
     suspend fun searchMovies(
         query: String?,
         minVoteAverage: Double?,
@@ -16,6 +29,7 @@ interface SearchDao {
         maxDuration: PGInterval?,
         minPrice: PGmoney?,
         maxPrice: PGmoney?,
-        isAdult: Boolean?
-    ): List<Movie>
+        isAdult: Boolean?,
+        userId: Int
+    ): List<MovieSearchResponse>
 }

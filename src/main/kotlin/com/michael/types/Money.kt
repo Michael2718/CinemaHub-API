@@ -61,15 +61,10 @@ object PGMoneySerializer : KSerializer<PGmoney> {
         try {
             val moneyDouble = decoder.decodeDouble()
             return PGmoney(moneyDouble)
-        } catch (e: NumberFormatException) {
+        } catch (e: Exception) {
             throw SerializationException("Error parsing money: ${e.message}")
         }
     }
-}
-
-fun parsePGMoney(moneyString: String): PGmoney {
-    val json = Json { ignoreUnknownKeys = true }
-    return json.decodeFromString(PGMoneySerializer, moneyString)
 }
 
 class PGMoneyGreaterEqOp(

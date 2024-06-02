@@ -32,6 +32,12 @@ class FavoritesDaoImpl : FavoritesDao {
             .map { it.toFavoriteResponse() }
     }
 
+    override suspend fun isFavorite(userId: Int, movieId: String): Boolean = FavoritesTable
+        .selectAll()
+        .where { (FavoritesTable.userId eq userId) and (FavoritesTable.movieId eq movieId) }
+        .map { it.toFavorite() }
+        .isNotEmpty()
+
     override suspend fun addFavorite(favorite: Favorite): Favorite? = dbQuery {
         val favoriteInsertStatement = FavoritesTable.insert {
             it[userId] = favorite.userId

@@ -15,7 +15,6 @@ import com.michael.plugins.authentication.Credentials
 import com.michael.plugins.authentication.JwtConfig
 import com.michael.plugins.authentication.isValidUser
 import com.michael.types.parsePGInterval
-import com.michael.types.parsePGMoney
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -24,6 +23,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.postgresql.util.PGmoney
 
 fun Application.configureRouting() {
     routing {
@@ -66,16 +66,23 @@ fun Route.searchRoute() {
             val maxReleaseDate = call.request.queryParameters["maxReleaseDate"]?.let { LocalDate.parse(it) }
             val minDuration = call.request.queryParameters["minDuration"]?.let { parsePGInterval(it) }
             val maxDuration = call.request.queryParameters["maxDuration"]?.let { parsePGInterval(it) }
-
-            val minPrice = call.request.queryParameters["minPrice"]?.let { parsePGMoney(it) }
-            val maxPrice = call.request.queryParameters["maxPrice"]?.let { parsePGMoney(it) }
-
-
+            val minPrice = call.request.queryParameters["minPrice"]?.let { PGmoney(it.toDouble()) }
+            val maxPrice = call.request.queryParameters["maxPrice"]?.let { PGmoney(it.toDouble()) }
             val isAdult = call.request.queryParameters["isAdult"]?.toBooleanStrictOrNull()
+
+            val userId = call.request.queryParameters["userId"]?.toIntOrNull()
 
             if (query == null) {
                 call.respondText(
                     "Missing query parameter",
+                    status = HttpStatusCode.BadRequest
+                )
+                return@get
+            }
+
+            if (userId == null) {
+                call.respondText(
+                    "Missing userId parameter",
                     status = HttpStatusCode.BadRequest
                 )
                 return@get
@@ -91,7 +98,8 @@ fun Route.searchRoute() {
                 maxDuration = maxDuration,
                 minPrice = minPrice,
                 maxPrice = maxPrice,
-                isAdult = isAdult
+                isAdult = isAdult,
+                userId = userId
             )
 
             call.respond(HttpStatusCode.OK, movies)
@@ -105,11 +113,26 @@ fun Route.favoritesRoute() {
 
         post {
             try {
-                val favoriteMovie = call.receive<Favorite>()
-                dao.addFavorite(favoriteMovie)
+                val userId = call.parameters["userId"]?.toIntOrNull()
+                val movieId = call.parameters["movieId"]
+
+                if (userId == null) {
+                    call.respondText("Missing or invalid userId", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+
+                if (movieId == null) {
+                    call.respondText("Missing or invalid movieId", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+
+//                val favoriteMovie = call.receive<Favorite>()
+                dao.addFavorite(
+                    Favorite(userId, movieId)
+                )
                 call.respond(HttpStatusCode.OK)
             } catch (e: ExposedSQLException) {
-                call.respondText("No movie or user (TODO)", status = HttpStatusCode.BadRequest)
+                call.respondText("No movie or user or movie is already added", status = HttpStatusCode.BadRequest)
             } catch (e: Exception) {
                 call.respondText("$e", status = HttpStatusCode.BadRequest)
             }
