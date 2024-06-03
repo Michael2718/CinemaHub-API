@@ -14,7 +14,6 @@ import com.michael.features.user.UserDaoImpl
 import com.michael.plugins.authentication.Credentials
 import com.michael.plugins.authentication.JwtConfig
 import com.michael.plugins.authentication.isValidUser
-import com.michael.types.parsePGInterval
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -23,6 +22,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.postgresql.util.PGInterval
 import org.postgresql.util.PGmoney
 
 fun Application.configureRouting() {
@@ -64,8 +64,8 @@ fun Route.searchRoute() {
             val maxVoteAverage = call.request.queryParameters["maxVoteAverage"]?.toDoubleOrNull()
             val minReleaseDate = call.request.queryParameters["minReleaseDate"]?.let { LocalDate.parse(it) }
             val maxReleaseDate = call.request.queryParameters["maxReleaseDate"]?.let { LocalDate.parse(it) }
-            val minDuration = call.request.queryParameters["minDuration"]?.let { parsePGInterval(it) }
-            val maxDuration = call.request.queryParameters["maxDuration"]?.let { parsePGInterval(it) }
+            val minDuration = call.request.queryParameters["minDuration"]?.let { PGInterval(it) }
+            val maxDuration = call.request.queryParameters["maxDuration"]?.let { PGInterval(it) }
             val minPrice = call.request.queryParameters["minPrice"]?.let { PGmoney(it.toDouble()) }
             val maxPrice = call.request.queryParameters["maxPrice"]?.let { PGmoney(it.toDouble()) }
             val isAdult = call.request.queryParameters["isAdult"]?.toBooleanStrictOrNull()
