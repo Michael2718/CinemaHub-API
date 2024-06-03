@@ -9,6 +9,7 @@ import com.michael.types.PGMoneyGreaterEqOp
 import com.michael.types.PGMoneyLessEqOp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Function
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.lessEq
@@ -17,39 +18,6 @@ import org.postgresql.util.PGInterval
 import org.postgresql.util.PGmoney
 
 class SearchDaoImpl : SearchDao {
-//    override suspend fun searchMovies(
-//        query: String?,
-//        minVoteAverage: Double?,
-//        maxVoteAverage: Double?,
-//        minReleaseDate: LocalDate?,
-//        maxReleaseDate: LocalDate?,
-//        minDuration: PGInterval?,
-//        maxDuration: PGInterval?,
-//        minPrice: PGmoney?,
-//        maxPrice: PGmoney?,
-//        isAdult: Boolean?
-//    ): List<Movie> = dbQuery {
-//        val conditions = getSearchConditions(
-//            query,
-//            minVoteAverage,
-//            maxVoteAverage,
-//            minReleaseDate,
-//            maxReleaseDate,
-//            minDuration,
-//            maxDuration,
-//            minPrice,
-//            maxPrice,
-//            isAdult,
-//        )
-//
-//        MovieTable
-//            .selectAll()
-//            .where {
-//                conditions.fold(Op.TRUE as Op<Boolean>) { acc, op -> acc and op }
-//            }
-//            .mapNotNull { it.toMovie() }
-//    }
-
     override suspend fun searchMovies(
         query: String?,
         minVoteAverage: Double?,
@@ -63,7 +31,6 @@ class SearchDaoImpl : SearchDao {
         isAdult: Boolean?,
         userId: Int
     ): List<MovieSearchResponse> = dbQuery {
-        val table = MovieTable
         val conditions = getSearchConditions(
             query,
             minVoteAverage,
@@ -79,11 +46,11 @@ class SearchDaoImpl : SearchDao {
 
         val isFavoriteAlias = Expression.build {
             case()
-                .When(FavoritesTable.userId eq userId, booleanLiteral(true))
+                .When(boolOr(FavoritesTable.userId eq userId), booleanLiteral(true))
                 .Else(booleanLiteral(false))
         }.alias("is_favorite")
 
-        val result = table
+        MovieTable
             .join(
                 otherTable = FavoritesTable,
                 joinType = JoinType.LEFT,
@@ -104,25 +71,13 @@ class SearchDaoImpl : SearchDao {
                 MovieTable.primaryImageUrl,
                 isFavoriteAlias
             )
-            .groupBy(
-                MovieTable.movieId,
-                MovieTable.title,
-                MovieTable.releaseDate,
-                MovieTable.duration,
-                MovieTable.voteAverage,
-                MovieTable.voteCount,
-                MovieTable.plot,
-                MovieTable.isAdult,
-                MovieTable.popularity,
-                MovieTable.price,
-                MovieTable.primaryImageUrl,
-                isFavoriteAlias
-            )
-//            .selectAll()
             .where {
                 conditions.fold(Op.TRUE as Op<Boolean>) { acc, op -> acc and op }
             }
-        result.mapNotNull { it.toMovieSearchResponse(isFavoriteAlias) }
+            .groupBy(
+                MovieTable.movieId,
+            )
+            .mapNotNull { it.toMovieSearchResponse(isFavoriteAlias) }
     }
 
     private fun getSearchConditions(
@@ -178,3 +133,15 @@ fun ResultRow.toMovieSearchResponse(isFavoriteAlias: Expression<Boolean>) = Movi
     this[MovieTable.primaryImageUrl],
     this[isFavoriteAlias]
 )
+
+class BoolOr(
+    private val expression: Expression<Boolean>,
+) : Function<Boolean>(BooleanColumnType()) {
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+        queryBuilder {
+            append("bool_or(", expression, ")")
+        }
+    }
+}
+
+fun boolOr(expr: Expression<Boolean>) = BoolOr(expr)
