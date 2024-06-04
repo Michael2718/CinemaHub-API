@@ -14,8 +14,8 @@ object DatabaseSingleton {
     private lateinit var config: ApplicationConfig
     private val dataSourceMap = mutableMapOf<Pair<String, String>, HikariDataSource>()
     private val lastAccessMap = mutableMapOf<Pair<String, String>, Long>()
-    private var idleTimeout: Long = 10000
-    private var cleanupInterval: Long = 30000
+    private var idleTimeout: Long = 30000
+    private var cleanupInterval: Long = 60000
     private lateinit var cleanupJob: Job
 
     fun init(config: ApplicationConfig, coroutineScope: CoroutineScope) {
@@ -27,7 +27,14 @@ object DatabaseSingleton {
         startCleanupTask(coroutineScope)
     }
 
-    fun connectHikari(credentials: Credentials): Database {
+    private fun defaultCredentials() = Credentials(
+        username = config.property("postgres.username").getString(),
+        password = config.property("postgres.password").getString()
+    )
+
+    fun connectHikari(
+        credentials: Credentials = defaultCredentials()
+    ): Database {
         val ds = createHikariDataSource(credentials)
         return Database.connect(ds)
     }
@@ -78,7 +85,7 @@ object DatabaseSingleton {
 
     suspend fun <T> dbQuery(block: suspend () -> T): T {
         val credentials = getCurrentCredentials()
-        val database = Database.connect(createHikariDataSource(credentials))
+        val database = connectHikari(credentials)
         return newSuspendedTransaction(Dispatchers.IO, database) {
             block()
         }

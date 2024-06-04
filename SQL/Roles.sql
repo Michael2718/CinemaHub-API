@@ -16,12 +16,18 @@ GRANT SELECT, UPDATE ON "user" TO user_role;
 
 -- Revoke all privileges from auth_role on data tables
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM auth_role;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM auth_role;
 GRANT user_role TO auth_role WITH ADMIN OPTION;
 
 -- Create specialized authentication user
 CREATE USER auth_user WITH PASSWORD 'secure_password123';
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM auth_user;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM auth_user;
 GRANT auth_role TO auth_user;
+GRANT INSERT ON "user" TO auth_user;
+GRANT USAGE ON SEQUENCE user_user_id_seq TO auth_user;
 ALTER USER auth_user WITH createrole;
+
 
 -- Create usual users
 CREATE USER user1 WITH PASSWORD '12345';

@@ -1,6 +1,7 @@
 package com.michael.plugins
 
 import com.michael.features.favorite.Favorite
+import com.michael.features.favorite.FavoriteRequest
 import com.michael.features.favorite.FavoritesDaoImpl
 import com.michael.features.genre.GenreDaoImpl
 import com.michael.features.history.History
@@ -9,6 +10,9 @@ import com.michael.features.movie.Movie
 import com.michael.features.movie.MovieDaoImpl
 import com.michael.features.review.ReviewDaoImpl
 import com.michael.features.search.SearchDaoImpl
+import com.michael.features.signup.SignUpRequest
+import com.michael.features.signup.createPostgresUser
+import com.michael.features.signup.insertUser
 import com.michael.features.transaction.TransactionDaoImpl
 import com.michael.features.user.UserDaoImpl
 import com.michael.plugins.authentication.Credentials
@@ -27,7 +31,8 @@ import org.postgresql.util.PGmoney
 
 fun Application.configureRouting() {
     routing {
-        loginRoute()
+        signInRoute()
+        signUpRoute()
         authenticate("auth-jwt") {
             searchRoute()
             favoritesRoute()
@@ -41,8 +46,8 @@ fun Application.configureRouting() {
     }
 }
 
-fun Route.loginRoute() {
-    post("/login") {
+fun Route.signInRoute() {
+    post("/signin") {
         val credentials = call.receive<Credentials>()
 
         if (isValidUser(credentials)) {
@@ -50,6 +55,39 @@ fun Route.loginRoute() {
             call.respond(mapOf("token" to token))
         } else {
             call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+        }
+    }
+}
+
+fun Route.signUpRoute() {
+    post("signup") {
+        try {
+            val request = call.receive<SignUpRequest>()
+            DatabaseSingleton.connectHikari()
+            if (!insertUser(request)) {
+                call.respondText(
+                    "Invalid user info",
+                    status = HttpStatusCode.BadRequest
+                )
+                return@post
+            }
+
+            val credentials = createPostgresUser(request.username, request.password)
+            if (credentials == null) {
+                call.respondText(
+                    "User role was not created",
+                    status = HttpStatusCode.BadRequest
+                )
+                return@post
+            }
+
+            val token = JwtConfig.generateToken(credentials)
+            call.respond(mapOf("token" to token))
+        } catch (e: Exception) {
+            call.respondText(
+                "Something went wrong",
+                status = HttpStatusCode.BadRequest
+            )
         }
     }
 }
@@ -113,20 +151,7 @@ fun Route.favoritesRoute() {
 
         post {
             try {
-                val userId = call.parameters["userId"]?.toIntOrNull()
-                val movieId = call.parameters["movieId"]
-
-                if (userId == null) {
-                    call.respondText("Missing or invalid userId", status = HttpStatusCode.BadRequest)
-                    return@post
-                }
-
-                if (movieId == null) {
-                    call.respondText("Missing or invalid movieId", status = HttpStatusCode.BadRequest)
-                    return@post
-                }
-
-//                val favoriteMovie = call.receive<Favorite>()
+                val (userId, movieId) = call.receive<FavoriteRequest>()
                 dao.addFavorite(
                     Favorite(userId, movieId)
                 )
