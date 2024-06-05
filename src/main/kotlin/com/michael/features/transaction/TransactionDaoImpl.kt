@@ -1,6 +1,8 @@
 package com.michael.features.transaction
 
 import com.michael.plugins.DatabaseSingleton.dbQuery
+import com.michael.utils.todayDateTime
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
@@ -10,13 +12,16 @@ class TransactionDaoImpl : TransactionDao {
         TransactionTable.selectAll().map { it.toTransaction() }
     }
 
-    override suspend fun addTransaction(transaction: Transaction): Transaction? = dbQuery {
+    override suspend fun addTransaction(
+        userId: Int,
+        movieId: String,
+        paymentMethod: Int
+    ): Transaction? = dbQuery {
         val transactionInsertStatement = TransactionTable.insert {
-            it[transactionId] = transaction.transactionId
-            it[userId] = transaction.userId
-            it[movieId] = transaction.movieId
-            it[purchaseDate] = transaction.purchaseDate
-            it[paymentMethod] = transaction.paymentMethod
+            it[this.userId] = userId
+            it[this.movieId] = movieId
+            it[this.purchaseDate] = todayDateTime()
+            it[this.paymentMethod] = paymentMethod
         }
 
         transactionInsertStatement.resultedValues?.singleOrNull()?.toTransaction()

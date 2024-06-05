@@ -453,6 +453,27 @@ fun Route.transactionRoute() {
                 call.respond(HttpStatusCode.NoContent)
             }
         }
+
+        post("{movieId}/{userId}/{paymentMethod}") {
+            try {
+                val movieId = call.parameters["movieId"]
+                val userId = call.parameters["userId"]?.toIntOrNull()
+                val paymentMethod = call.parameters["paymentMethod"]?.toIntOrNull()
+                if (userId == null || movieId == null || paymentMethod == null) {
+                    call.respondText("Missing or invalid ids or paymentMethod", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+
+                val transaction = dao.addTransaction(userId, movieId, paymentMethod)
+                if (transaction == null) {
+                    call.respond(HttpStatusCode.NoContent)
+                } else {
+                    call.respond(message = transaction, status = HttpStatusCode.OK)
+                }
+            } catch (e: Exception) {
+                call.respondText("$e", status = HttpStatusCode.BadRequest)
+            }
+        }
     }
 }
 
