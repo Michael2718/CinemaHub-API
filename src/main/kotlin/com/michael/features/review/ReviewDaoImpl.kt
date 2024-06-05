@@ -1,12 +1,9 @@
 package com.michael.features.review
 
-import com.michael.features.favorite.FavoritesTable
-import com.michael.features.movie.MovieTable
 import com.michael.features.user.UserTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 
