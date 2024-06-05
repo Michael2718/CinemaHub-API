@@ -6,7 +6,6 @@ import com.michael.features.search.boolOr
 import com.michael.features.search.toMovieSearchResponse
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class MovieDaoImpl : MovieDao {
     override suspend fun getAll(): List<Movie> = dbQuery {

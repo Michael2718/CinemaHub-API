@@ -239,6 +239,24 @@ fun Route.genreTable() {
                 call.respond(HttpStatusCode.NoContent)
             }
         }
+        get("{genreId}") {
+            val genreId = call.parameters["genreId"]?.toIntOrNull()
+
+            if (genreId == null) {
+                call.respondText("Missing or invalid genreId", status = HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val movies = dao.getMoviesByGenreId(genreId)
+            when {
+                movies.isEmpty() -> call.respondText(
+                    "Movies not found",
+                    status = HttpStatusCode.BadRequest
+                )
+
+                else -> call.respond(HttpStatusCode.OK, movies)
+            }
+        }
     }
 }
 
