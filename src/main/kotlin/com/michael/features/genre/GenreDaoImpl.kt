@@ -1,6 +1,5 @@
 package com.michael.features.genre
 
-import com.michael.features.favorite.FavoritesTable
 import com.michael.features.movie.Movie
 import com.michael.features.movie.MovieTable
 import com.michael.features.movie.toMovie
@@ -8,7 +7,6 @@ import com.michael.features.movieGenre.MovieGenreTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.selectAll
 
 class GenreDaoImpl : GenreDao {
