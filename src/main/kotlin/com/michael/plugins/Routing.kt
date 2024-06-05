@@ -14,6 +14,7 @@ import com.michael.features.signup.SignUpRequest
 import com.michael.features.signup.createPostgresUser
 import com.michael.features.signup.insertUser
 import com.michael.features.transaction.TransactionDaoImpl
+import com.michael.features.user.UpdateUserRequest
 import com.michael.features.user.UserDaoImpl
 import com.michael.plugins.authentication.Credentials
 import com.michael.plugins.authentication.JwtConfig
@@ -386,6 +387,26 @@ fun Route.userRoute() {
                 )
 
                 else -> call.respond(HttpStatusCode.OK, user)
+            }
+        }
+
+        post("{user_id}") {
+            try {
+                val userId = call.parameters["user_id"]?.toIntOrNull()
+                if (userId == null) {
+                    call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+                val request = call.receive<UpdateUserRequest>()
+                val updatedUser = dao.updateUser(userId, request)
+                if (updatedUser == null) {
+                    call.respondText("Invalid user info", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+                call.respond(message = updatedUser, status = HttpStatusCode.OK)
+            } catch (e: Exception) {
+                println(e)
+                call.respondText("$e", status = HttpStatusCode.BadRequest)
             }
         }
 

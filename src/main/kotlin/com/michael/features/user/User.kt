@@ -27,3 +27,11 @@ object UserTable : Table("user") {
 
     override val primaryKey = PrimaryKey(userId)
 }
+
+@Serializable
+data class UpdateUserRequest(
+    val username: String,
+    val firstName: String,
+    val lastName: String,
+    val email: String
+)
