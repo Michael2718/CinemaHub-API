@@ -333,7 +333,7 @@ fun Route.movieRoute() {
 }
 
 fun Route.reviewRoute() {
-    route("/review") {
+    route("/reviews") {
         val dao = ReviewDaoImpl()
         get {
             val reviews = dao.getAll()
@@ -342,6 +342,18 @@ fun Route.reviewRoute() {
             } else {
                 call.respond(HttpStatusCode.NoContent)
             }
+        }
+        get("{movieId}") {
+            val movieId = call.parameters["movieId"]
+
+            if (movieId == null) {
+                call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val reviews = dao.getByMovieId(movieId)
+
+            call.respond(HttpStatusCode.OK, reviews)
         }
     }
 }

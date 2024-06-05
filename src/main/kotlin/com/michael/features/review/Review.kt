@@ -23,3 +23,13 @@ object ReviewTable : Table("review") {
 
     override val primaryKey = PrimaryKey(userId, movieId)
 }
+
+@Serializable
+data class ReviewResponse(
+    val username: String,
+    val vote: Int,
+    val comment: String,
+    val likes: Int,
+    val dislikes: Int,
+)
+

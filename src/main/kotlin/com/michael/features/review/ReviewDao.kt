@@ -6,4 +6,6 @@ interface ReviewDao {
     suspend fun addReview(
         review: Review
     ): Review?
+
+    suspend fun getByMovieId(movieId: String): List<ReviewResponse>
 }
