@@ -1,19 +1,59 @@
 package com.michael.features.movie
 
+import com.michael.features.favorite.FavoritesTable
+import com.michael.features.search.MovieSearchResponse
+import com.michael.features.search.boolOr
+import com.michael.features.search.toMovieSearchResponse
 import com.michael.plugins.DatabaseSingleton.dbQuery
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class MovieDaoImpl : MovieDao {
     override suspend fun getAll(): List<Movie> = dbQuery {
         MovieTable.selectAll().map { it.toMovie() }
     }
 
-    override suspend fun getByMovieId(movieId: String): Movie? = dbQuery {
+    override suspend fun get(movieId: String): Movie? = dbQuery {
         val query = MovieTable.selectAll().where { MovieTable.movieId eq movieId }
 
         query.map { it.toMovie() }.singleOrNull()
+    }
+
+    override suspend fun getByUserId(movieId: String, userId: Int): MovieSearchResponse? = dbQuery {
+        val isFavoriteAlias = Expression.build {
+            case()
+                .When(boolOr(FavoritesTable.userId eq userId), booleanLiteral(true))
+                .Else(booleanLiteral(false))
+        }.alias("is_favorite")
+
+        MovieTable
+            .join(
+                otherTable = FavoritesTable,
+                joinType = JoinType.LEFT,
+                onColumn = MovieTable.movieId,
+                otherColumn = FavoritesTable.movieId
+            )
+            .select(
+                MovieTable.movieId,
+                MovieTable.title,
+                MovieTable.releaseDate,
+                MovieTable.duration,
+                MovieTable.voteAverage,
+                MovieTable.voteCount,
+                MovieTable.plot,
+                MovieTable.isAdult,
+                MovieTable.popularity,
+                MovieTable.price,
+                MovieTable.primaryImageUrl,
+                isFavoriteAlias
+            )
+            .where {
+                (MovieTable.movieId eq movieId)
+            }
+            .groupBy(
+                MovieTable.movieId,
+            )
+            .singleOrNull()?.toMovieSearchResponse(isFavoriteAlias)
     }
 
     override suspend fun addMovie(movie: Movie): Movie? = dbQuery {

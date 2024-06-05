@@ -26,10 +26,11 @@ object ReviewTable : Table("review") {
 
 @Serializable
 data class ReviewResponse(
+    val movieId: String,
+    val userId: Int,
     val username: String,
     val vote: Int,
     val comment: String,
     val likes: Int,
     val dislikes: Int,
 )
-

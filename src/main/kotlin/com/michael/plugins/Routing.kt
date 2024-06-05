@@ -229,7 +229,7 @@ fun Route.favoritesRoute() {
 }
 
 fun Route.genreTable() {
-    route("genre") {
+    route("genres") {
         val dao = GenreDaoImpl()
         get {
             val genres = dao.getAll()
@@ -309,7 +309,7 @@ fun Route.movieRoute() {
                 return@get
             }
 
-            val movie = dao.getByMovieId(movieId)
+            val movie = dao.get(movieId)
             when {
                 movie == null -> call.respondText(
                     "Movie not found",
@@ -317,6 +317,26 @@ fun Route.movieRoute() {
                 )
 
                 else -> call.respond(HttpStatusCode.OK, movie)
+            }
+        }
+
+        get("{movieId}/{userId}") {
+            try {
+                val movieId = call.parameters["movieId"]
+                val userId = call.parameters["userId"]?.toIntOrNull()
+                if (userId == null || movieId == null) {
+                    call.respondText("Missing or invalid ids", status = HttpStatusCode.BadRequest)
+                    return@get
+                }
+
+                val movie = dao.getByUserId(movieId, userId)
+                if (movie == null) {
+                    call.respond(HttpStatusCode.NoContent)
+                } else {
+                    call.respond(message = movie, status = HttpStatusCode.OK)
+                }
+            } catch (e: Exception) {
+                call.respondText("$e", status = HttpStatusCode.BadRequest)
             }
         }
 
@@ -351,9 +371,73 @@ fun Route.reviewRoute() {
                 return@get
             }
 
-            val reviews = dao.getByMovieId(movieId)
+            val reviews = dao.getReviews(movieId)
 
             call.respond(HttpStatusCode.OK, reviews)
+        }
+
+        get("{movieId}/{userId}") {
+            try {
+                val movieId = call.parameters["movieId"]
+                val userId = call.parameters["userId"]?.toIntOrNull()
+                if (userId == null || movieId == null) {
+                    call.respondText("Missing or invalid ids or vote", status = HttpStatusCode.BadRequest)
+                    return@get
+                }
+
+                val review = dao.getReview(movieId, userId)
+                if (review == null) {
+                    call.respond(HttpStatusCode.NoContent)
+                } else {
+                    call.respond(message = review, status = HttpStatusCode.OK)
+                }
+            } catch (e: Exception) {
+                call.respondText("$e", status = HttpStatusCode.BadRequest)
+            }
+        }
+
+        post("{movieId}/{userId}") {
+            try {
+                val movieId = call.parameters["movieId"]
+                val userId = call.parameters["userId"]?.toIntOrNull()
+                val vote = call.request.queryParameters["vote"]?.toIntOrNull()
+                val comment = call.request.queryParameters["comment"]
+                if (userId == null || movieId == null || vote == null || comment == null) {
+                    call.respondText("Missing or invalid ids or vote", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+
+                val review = dao.addReview(movieId, userId, vote, comment)
+                if (review == null) {
+                    call.respond(HttpStatusCode.NoContent)
+                } else {
+                    call.respond(message = review, status = HttpStatusCode.OK)
+                }
+            } catch (e: Exception) {
+                call.respondText("$e", status = HttpStatusCode.BadRequest)
+            }
+        }
+
+        post("{movieId}/{userId}/rate") {
+            try {
+                val movieId = call.parameters["movieId"]
+                val userId = call.parameters["userId"]?.toIntOrNull()
+                val like = call.request.queryParameters["like"]?.toBoolean()
+
+                if (userId == null || movieId == null || like == null) {
+                    call.respondText("Missing or invalid ids or parameter 'like'", status = HttpStatusCode.BadRequest)
+                    return@post
+                }
+                if (like) {
+                    dao.like(movieId, userId)
+                } else {
+                    dao.dislike(movieId, userId)
+                }
+
+                call.respond(HttpStatusCode.OK)
+            } catch (e: Exception) {
+                call.respondText("$e", status = HttpStatusCode.BadRequest)
+            }
         }
     }
 }
