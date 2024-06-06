@@ -27,7 +27,6 @@ class TransactionDaoImpl : TransactionDao {
     }
 
     private fun ResultRow.toTransaction(): Transaction = Transaction(
-        this[TransactionTable.transactionId],
         this[TransactionTable.userId],
         this[TransactionTable.movieId],
         this[TransactionTable.purchaseDate],

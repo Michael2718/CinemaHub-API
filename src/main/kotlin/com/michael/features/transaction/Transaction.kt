@@ -8,7 +8,6 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 @Serializable
 data class Transaction(
-    val transactionId: Int,
     val userId: Int,
     val movieId: String,
     val purchaseDate: LocalDateTime = todayDateTime(),
@@ -16,11 +15,10 @@ data class Transaction(
 )
 
 object TransactionTable : Table("transaction") {
-    val transactionId = integer("transaction_id").autoIncrement()
     val userId = integer("user_id")
     val movieId = varchar("movie_id", 10)
     val purchaseDate = datetime("purchase_date")
     val paymentMethod = integer("payment_method")
 
-    override val primaryKey = PrimaryKey(transactionId)
+    override val primaryKey = PrimaryKey(userId, movieId)
 }

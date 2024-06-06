@@ -4,6 +4,7 @@ import com.michael.features.favorite.FavoritesTable
 import com.michael.features.search.MovieSearchResponse
 import com.michael.features.search.boolOr
 import com.michael.features.search.toMovieSearchResponse
+import com.michael.features.transaction.TransactionTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.*
 
@@ -18,12 +19,17 @@ class MovieDaoImpl : MovieDao {
         query.map { it.toMovie() }.singleOrNull()
     }
 
-    override suspend fun getByUserId(movieId: String, userId: Int): MovieSearchResponse? = dbQuery {
+    override suspend fun getByUserId(movieId: String, userId: Int): MovieDetailsResponse? = dbQuery {
         val isFavoriteAlias = Expression.build {
             case()
                 .When(boolOr(FavoritesTable.userId eq userId), booleanLiteral(true))
                 .Else(booleanLiteral(false))
         }.alias("is_favorite")
+        val isBoughtAlias = Expression.build {
+            case()
+                .When(boolOr(TransactionTable.movieId eq movieId), booleanLiteral(true))
+                .Else(booleanLiteral(false))
+        }.alias("is_bought")
 
         MovieTable
             .join(
@@ -31,6 +37,12 @@ class MovieDaoImpl : MovieDao {
                 joinType = JoinType.LEFT,
                 onColumn = MovieTable.movieId,
                 otherColumn = FavoritesTable.movieId
+            )
+            .join(
+                otherTable = TransactionTable,
+                joinType = JoinType.LEFT,
+                onColumn = MovieTable.movieId,
+                otherColumn = TransactionTable.movieId
             )
             .select(
                 MovieTable.movieId,
@@ -44,7 +56,8 @@ class MovieDaoImpl : MovieDao {
                 MovieTable.popularity,
                 MovieTable.price,
                 MovieTable.primaryImageUrl,
-                isFavoriteAlias
+                isFavoriteAlias,
+                isBoughtAlias
             )
             .where {
                 (MovieTable.movieId eq movieId)
@@ -52,7 +65,7 @@ class MovieDaoImpl : MovieDao {
             .groupBy(
                 MovieTable.movieId,
             )
-            .singleOrNull()?.toMovieSearchResponse(isFavoriteAlias)
+            .singleOrNull()?.toMovieDetailsResponse(isFavoriteAlias, isBoughtAlias)
     }
 
     override suspend fun addMovie(movie: Movie): Movie? = dbQuery {
@@ -86,4 +99,23 @@ fun ResultRow.toMovie(): Movie = Movie(
     this[MovieTable.popularity],
     this[MovieTable.price],
     this[MovieTable.primaryImageUrl]
+)
+
+fun ResultRow.toMovieDetailsResponse(
+    isFavoriteAlias: Expression<Boolean>,
+    isBoughtAlias: Expression<Boolean>
+) = MovieDetailsResponse(
+    this[MovieTable.movieId],
+    this[MovieTable.title],
+    this[MovieTable.releaseDate],
+    this[MovieTable.duration],
+    this[MovieTable.voteAverage],
+    this[MovieTable.voteCount],
+    this[MovieTable.plot],
+    this[MovieTable.isAdult],
+    this[MovieTable.popularity],
+    this[MovieTable.price],
+    this[MovieTable.primaryImageUrl],
+    this[isFavoriteAlias],
+    this[isBoughtAlias]
 )
