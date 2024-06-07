@@ -37,7 +37,7 @@ fun Application.configureRouting() {
         authenticate("auth-jwt") {
             searchRoute()
             favoritesRoute()
-            genreTable()
+            genresRoute()
             historyRoute()
             movieRoute()
             reviewRoute()
@@ -228,7 +228,7 @@ fun Route.favoritesRoute() {
     }
 }
 
-fun Route.genreTable() {
+fun Route.genresRoute() {
     route("genres") {
         val dao = GenreDaoImpl()
         get {
@@ -239,6 +239,16 @@ fun Route.genreTable() {
                 call.respond(HttpStatusCode.NoContent)
             }
         }
+
+        get("movies") {
+            val genres = dao.getAllMovies()
+            if (genres.isNullOrEmpty()) {
+                call.respond(HttpStatusCode.NoContent)
+            } else {
+                call.respond(HttpStatusCode.OK, genres)
+            }
+        }
+
         get("{genreId}") {
             val genreId = call.parameters["genreId"]?.toIntOrNull()
 

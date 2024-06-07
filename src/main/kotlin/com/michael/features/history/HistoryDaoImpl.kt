@@ -3,10 +3,7 @@ package com.michael.features.history
 import com.michael.features.movie.Movie
 import com.michael.features.movie.MovieTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
-import org.jetbrains.exposed.sql.JoinType
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 
 class HistoryDaoImpl : HistoryDao {
     override suspend fun getAll(): List<History> = dbQuery {
@@ -23,6 +20,7 @@ class HistoryDaoImpl : HistoryDao {
             )
             .selectAll()
             .where { HistoryTable.userId eq userId }
+            .orderBy(HistoryTable.watchedDate, SortOrder.DESC)
             .map { it.toHistoryResponse() }
     }
 

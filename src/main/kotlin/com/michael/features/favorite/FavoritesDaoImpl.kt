@@ -29,6 +29,7 @@ class FavoritesDaoImpl : FavoritesDao {
             )
             .selectAll()
             .where { FavoritesTable.userId eq userId }
+            .orderBy(MovieTable.title, SortOrder.DESC)
             .map { it.toFavoriteResponse() }
     }
 

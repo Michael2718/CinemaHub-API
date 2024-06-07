@@ -7,6 +7,7 @@ import com.michael.features.movieGenre.MovieGenreTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.selectAll
 
 class GenreDaoImpl : GenreDao {
@@ -24,7 +25,26 @@ class GenreDaoImpl : GenreDao {
             )
             .selectAll()
             .where { MovieGenreTable.genreId eq genreId }
+            .orderBy(MovieTable.voteAverage, SortOrder.DESC)
             .map { it.toMovie() }
+    }
+
+    override suspend fun getAllMovies(): Map<String, List<Movie>>? = dbQuery {
+        val genres = GenreTable.selectAll().map { it.toGenre() }
+        val result = genres.associate { genre ->
+            genre.name to MovieGenreTable
+                .join(
+                    MovieTable,
+                    JoinType.INNER,
+                    onColumn = MovieGenreTable.movieId,
+                    otherColumn = MovieTable.movieId
+                )
+                .selectAll()
+                .where { MovieGenreTable.genreId eq genre.genreId }
+                .orderBy(MovieTable.voteAverage, SortOrder.DESC)
+                .map { it.toMovie() }
+        }
+        result.ifEmpty { null }
     }
 
     override suspend fun addGenre(genre: Genre): Genre? = dbQuery {

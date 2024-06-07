@@ -77,6 +77,7 @@ class SearchDaoImpl : SearchDao {
             .groupBy(
                 MovieTable.movieId,
             )
+            .orderBy(MovieTable.voteAverage, SortOrder.DESC)
             .mapNotNull { it.toMovieSearchResponse(isFavoriteAlias) }
     }
 

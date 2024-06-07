@@ -9,7 +9,7 @@ data class MovieGenre(
     val genreId: Int
 )
 
-object MovieGenreTable : Table("genre") {
+object MovieGenreTable : Table("movie_genre") {
     val movieId = varchar("movie_id", 10)
     val genreId = integer("genre_id")
 

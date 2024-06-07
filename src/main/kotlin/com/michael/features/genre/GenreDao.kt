@@ -6,6 +6,7 @@ interface GenreDao {
     suspend fun getAll(): List<Genre>
 
     suspend fun getMoviesByGenreId(genreId: Int): List<Movie>?
+    suspend fun getAllMovies(): Map<String, List<Movie>>?
 
     suspend fun addGenre(
         genre: Genre
