@@ -10,29 +10,26 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Application.configureAuthentication() {
-//    val secret = environment.config.property("jwt.secret").getString()
-//    val issuer = environment.config.property("jwt.issuer").getString()
-//    val audience = environment.config.property("jwt.audience").getString()
-    val myRealm = environment.config.property("jwt.realm").getString()
+    val userRealm = environment.config.property("jwt.user_realm").getString()
+    val adminRealm = environment.config.property("jwt.admin_realm").getString()
 
     JwtConfig.init(environment.config)
     install(Authentication) {
-        jwt("auth-jwt") {
-            realm = myRealm
-            verifier(JwtConfig.verifier)
+        jwt("user-auth-jwt") {
+            realm = userRealm
+            verifier(JwtConfig.user_verifier)
             validate { jwtCredential ->
-                val username = jwtCredential.payload.getClaim("username").asString()
-                val password = jwtCredential.payload.getClaim("password").asString()
-
-                if (username.isEmpty() || password.isEmpty()) return@validate null
-
-                try {
-                    DatabaseSingleton.connectHikari(Credentials(username, password))
-                } catch (e: Exception) {
-                    return@validate null
-                }
-
-                JWTPrincipal(jwtCredential.payload)
+                validateJwt(jwtCredential)
+            }
+            challenge { _, _ ->
+                call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
+            }
+        }
+        jwt("admin-auth-jwt") {
+            realm = adminRealm
+            verifier(JwtConfig.admin_verifier)
+            validate { jwtCredential ->
+                validateJwt(jwtCredential)
             }
             challenge { _, _ ->
                 call.respond(HttpStatusCode.Unauthorized, "Token is not valid or has expired")
@@ -41,17 +38,19 @@ fun Application.configureAuthentication() {
     }
 }
 
-@Serializable
-data class Credentials(val username: String, val password: String)
+fun validateJwt(jwtCredential: JWTCredential): JWTPrincipal? {
+    val username = jwtCredential.payload.getClaim("username").asString()
+    val password = jwtCredential.payload.getClaim("password").asString()
 
-fun Credentials.toPair() = this.username to this.password
+    if (username.isEmpty() || password.isEmpty()) return null
 
-//fun ApplicationCall.getUserCredentials(): Credentials? {
-//    val principal = this.principal<JWTPrincipal>() ?: return null
-//    val username = principal.payload.getClaim("username").asString()
-//    val password = principal.payload.getClaim("password").asString()
-//    return Credentials(username, password)
-//}
+    return try {
+        DatabaseSingleton.connectHikari(Credentials(username, password))
+        JWTPrincipal(jwtCredential.payload)
+    } catch (e: Exception) {
+        null
+    }
+}
 
 fun isValidUser(credentials: Credentials): Boolean {
     try {
@@ -64,3 +63,31 @@ fun isValidUser(credentials: Credentials): Boolean {
     }
     return true
 }
+
+fun isAdmin(credentials: Credentials): Boolean {
+    val query = "SELECT EXISTS (SELECT 1\n" +
+            "               FROM pg_roles\n" +
+            "                        LEFT JOIN pg_auth_members ON pg_roles.oid = pg_auth_members.member\n" +
+            "               WHERE rolname = '${credentials.username}'\n" +
+            "                 AND roleid = (SELECT oid FROM pg_roles WHERE rolname = 'admin_role'));"
+    try {
+        val db = DatabaseSingleton.connectHikari(credentials)
+        val result = transaction(db) {
+            this.exec(query) { resultSet ->
+                if (resultSet.next()) {
+                    resultSet.getBoolean(1)
+                } else {
+                    false
+                }
+            }
+        } ?: false
+        return result
+    } catch (e: Exception) {
+        return false
+    }
+}
+
+@Serializable
+data class Credentials(val username: String, val password: String)
+
+fun Credentials.toPair() = this.username to this.password

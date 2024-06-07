@@ -18,6 +18,7 @@ import com.michael.features.user.UpdateUserRequest
 import com.michael.features.user.UserDaoImpl
 import com.michael.plugins.authentication.Credentials
 import com.michael.plugins.authentication.JwtConfig
+import com.michael.plugins.authentication.isAdmin
 import com.michael.plugins.authentication.isValidUser
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -34,7 +35,7 @@ fun Application.configureRouting() {
     routing {
         signInRoute()
         signUpRoute()
-        authenticate("auth-jwt") {
+        authenticate("user-auth-jwt", "admin-auth-jwt") {
             searchRoute()
             favoritesRoute()
             genresRoute()
@@ -44,6 +45,11 @@ fun Application.configureRouting() {
             transactionRoute()
             userRoute()
         }
+        authenticate("admin-auth-jwt") {
+            get("/admin") {
+                call.respond(HttpStatusCode.OK, "I am admin")
+            }
+        }
     }
 }
 
@@ -52,7 +58,8 @@ fun Route.signInRoute() {
         val credentials = call.receive<Credentials>()
 
         if (isValidUser(credentials)) {
-            val token = JwtConfig.generateToken(credentials)
+            val isAdmin = isAdmin(credentials)
+            val token = JwtConfig.generateToken(credentials, isAdmin)
             call.respond(mapOf("token" to token))
         } else {
             call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
@@ -82,7 +89,7 @@ fun Route.signUpRoute() {
                 return@post
             }
 
-            val token = JwtConfig.generateToken(credentials)
+            val token = JwtConfig.generateToken(credentials, isAdmin = false)
             call.respond(mapOf("token" to token))
         } catch (e: Exception) {
             call.respondText(

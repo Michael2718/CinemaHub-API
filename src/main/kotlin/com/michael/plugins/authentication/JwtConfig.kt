@@ -9,27 +9,36 @@ import java.util.*
 object JwtConfig {
     private lateinit var secret: String
     private lateinit var issuer: String
-    private lateinit var audience: String
-    private lateinit var realm: String
+    private lateinit var user_audience: String
+    private lateinit var admin_audience: String
 
     fun init(config: ApplicationConfig) {
         secret = config.property("jwt.secret").getString()
         issuer = config.property("jwt.issuer").getString()
-        audience = config.property("jwt.audience").getString()
-        realm = config.property("jwt.realm").getString()
+        user_audience = config.property("jwt.user_audience").getString()
+        admin_audience = config.property("jwt.admin_audience").getString()
     }
 
     private val algorithm: Algorithm
         get() = Algorithm.HMAC256(secret)
 
-    val verifier: JWTVerifier
+    val user_verifier: JWTVerifier
         get() = JWT
             .require(algorithm)
-            .withAudience(audience)
+            .withAudience(user_audience)
             .withIssuer(issuer)
             .build()
 
-    fun generateToken(credentials: Credentials): String {
+    val admin_verifier: JWTVerifier
+        get() = JWT
+            .require(algorithm)
+            .withAudience(admin_audience)
+            .withIssuer(issuer)
+            .build()
+
+
+    fun generateToken(credentials: Credentials, isAdmin: Boolean): String {
+        val audience = if (isAdmin) admin_audience else user_audience
         return JWT.create()
             .withAudience(audience)
             .withIssuer(issuer)
