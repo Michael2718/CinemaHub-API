@@ -2,6 +2,8 @@ package com.michael.features.user
 
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 
@@ -22,12 +24,12 @@ class UserDaoImpl : UserDao {
         query.map { it.toUser() }.singleOrNull()
     }
 
-    override suspend fun updateUser(userId: Int, userRequest: UpdateUserRequest): User? = dbQuery {
+    override suspend fun updateUser(userId: Int, updateRequest: UpdateUserRequest): User? = dbQuery {
         val query = UserTable.update({ UserTable.userId eq userId }) {
-            it[username] = userRequest.username
-            it[firstName] = userRequest.firstName
-            it[lastName] = userRequest.lastName
-            it[email] = userRequest.email
+            it[username] = updateRequest.username
+            it[firstName] = updateRequest.firstName
+            it[lastName] = updateRequest.lastName
+            it[email] = updateRequest.email
         }
         if (query != 1) null
         else {
@@ -37,6 +39,10 @@ class UserDaoImpl : UserDao {
                 .map { it.toUser() }
                 .singleOrNull()
         }
+    }
+
+    override suspend fun deleteUser(userId: Int): Boolean = dbQuery {
+        UserTable.deleteWhere { UserTable.userId eq userId } != 0
     }
 }
 

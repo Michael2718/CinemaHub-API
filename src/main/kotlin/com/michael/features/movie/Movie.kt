@@ -28,7 +28,7 @@ data class Movie(
     val primaryImageUrl: String
 )
 
-object MovieTable : Table("movie") {
+object MoviesTable : Table("movie") {
     val movieId = varchar("movie_id", 10)
     val title = varchar("title", 256)
     val releaseDate = date("release_date")
@@ -61,4 +61,17 @@ data class MovieDetailsResponse(
     val primaryImageUrl: String,
     val isFavorite: Boolean,
     val isBought: Boolean
+)
+
+@Serializable
+data class UpdateMovieRequest(
+    val title: String,
+    val releaseDate: LocalDate,
+    @Serializable(with = PGIntervalSerializer::class)
+    val duration: PGInterval,
+    val plot: String,
+    val isAdult: Boolean,
+    @Serializable(with = PGMoneySerializer::class)
+    val price: PGmoney,
+    val primaryImageUrl: String
 )

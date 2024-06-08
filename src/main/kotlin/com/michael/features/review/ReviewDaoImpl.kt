@@ -3,6 +3,7 @@ package com.michael.features.review
 import com.michael.features.user.UserTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 
 class ReviewDaoImpl : ReviewDao {
@@ -75,6 +76,9 @@ class ReviewDaoImpl : ReviewDao {
         query == 1
     }
 
+    override suspend fun deleteReview(movieId: String, userId: Int): Boolean = dbQuery {
+        ReviewTable.deleteWhere { (ReviewTable.movieId eq movieId) and (ReviewTable.userId eq userId) } != 0
+    }
 }
 
 fun ResultRow.toReview(): Review = Review(

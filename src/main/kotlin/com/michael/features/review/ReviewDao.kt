@@ -15,4 +15,6 @@ interface ReviewDao {
 
     suspend fun like(movieId: String, userId: Int): Boolean
     suspend fun dislike(movieId: String, userId: Int): Boolean
+
+    suspend fun deleteReview(movieId: String, userId: Int): Boolean
 }

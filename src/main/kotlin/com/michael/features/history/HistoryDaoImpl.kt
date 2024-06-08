@@ -1,7 +1,7 @@
 package com.michael.features.history
 
 import com.michael.features.movie.Movie
-import com.michael.features.movie.MovieTable
+import com.michael.features.movie.MoviesTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.*
 
@@ -13,10 +13,10 @@ class HistoryDaoImpl : HistoryDao {
     override suspend fun getByUserId(userId: Int): List<HistoryResponse> = dbQuery {
         HistoryTable
             .join(
-                MovieTable,
+                MoviesTable,
                 JoinType.INNER,
                 onColumn = HistoryTable.movieId,
-                otherColumn = MovieTable.movieId
+                otherColumn = MoviesTable.movieId
             )
             .selectAll()
             .where { HistoryTable.userId eq userId }
@@ -45,17 +45,17 @@ class HistoryDaoImpl : HistoryDao {
 
     private fun ResultRow.toHistoryResponse(): HistoryResponse = HistoryResponse(
         movie = Movie(
-            this[MovieTable.movieId],
-            this[MovieTable.title],
-            this[MovieTable.releaseDate],
-            this[MovieTable.duration],
-            this[MovieTable.voteAverage],
-            this[MovieTable.voteCount],
-            this[MovieTable.plot],
-            this[MovieTable.isAdult],
-            this[MovieTable.popularity],
-            this[MovieTable.price],
-            this[MovieTable.primaryImageUrl]
+            this[MoviesTable.movieId],
+            this[MoviesTable.title],
+            this[MoviesTable.releaseDate],
+            this[MoviesTable.duration],
+            this[MoviesTable.voteAverage],
+            this[MoviesTable.voteCount],
+            this[MoviesTable.plot],
+            this[MoviesTable.isAdult],
+            this[MoviesTable.popularity],
+            this[MoviesTable.price],
+            this[MoviesTable.primaryImageUrl]
         ),
         watchedDate = this[HistoryTable.watchedDate],
         watchedDuration = this[HistoryTable.watchedDuration]

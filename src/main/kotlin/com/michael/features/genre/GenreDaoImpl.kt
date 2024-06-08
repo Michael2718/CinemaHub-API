@@ -1,7 +1,7 @@
 package com.michael.features.genre
 
 import com.michael.features.movie.Movie
-import com.michael.features.movie.MovieTable
+import com.michael.features.movie.MoviesTable
 import com.michael.features.movie.toMovie
 import com.michael.features.movieGenre.MovieGenreTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
@@ -18,14 +18,14 @@ class GenreDaoImpl : GenreDao {
     override suspend fun getMoviesByGenreId(genreId: Int): List<Movie> = dbQuery {
         MovieGenreTable
             .join(
-                MovieTable,
+                MoviesTable,
                 JoinType.INNER,
                 onColumn = MovieGenreTable.movieId,
-                otherColumn = MovieTable.movieId
+                otherColumn = MoviesTable.movieId
             )
             .selectAll()
             .where { MovieGenreTable.genreId eq genreId }
-            .orderBy(MovieTable.voteAverage, SortOrder.DESC)
+            .orderBy(MoviesTable.voteAverage, SortOrder.DESC)
             .map { it.toMovie() }
     }
 
@@ -34,14 +34,14 @@ class GenreDaoImpl : GenreDao {
         val result = genres.associate { genre ->
             genre.name to MovieGenreTable
                 .join(
-                    MovieTable,
+                    MoviesTable,
                     JoinType.INNER,
                     onColumn = MovieGenreTable.movieId,
-                    otherColumn = MovieTable.movieId
+                    otherColumn = MoviesTable.movieId
                 )
                 .selectAll()
                 .where { MovieGenreTable.genreId eq genre.genreId }
-                .orderBy(MovieTable.voteAverage, SortOrder.DESC)
+                .orderBy(MoviesTable.voteAverage, SortOrder.DESC)
                 .map { it.toMovie() }
         }
         result.ifEmpty { null }

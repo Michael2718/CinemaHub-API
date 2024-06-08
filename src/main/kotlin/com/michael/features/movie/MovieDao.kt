@@ -9,4 +9,8 @@ interface MovieDao {
     suspend fun addMovie(
         movie: Movie
     ): Movie?
+
+    suspend fun deleteMovie(movieId: String): Boolean
+
+    suspend fun updateMovie(movieId: String, updateRequest: UpdateMovieRequest): Movie?
 }

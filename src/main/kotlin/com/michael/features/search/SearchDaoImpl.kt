@@ -1,7 +1,7 @@
 package com.michael.features.search
 
 import com.michael.features.favorite.FavoritesTable
-import com.michael.features.movie.MovieTable
+import com.michael.features.movie.MoviesTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import com.michael.types.PGIntervalGreaterEqOp
 import com.michael.types.PGIntervalLessEqOp
@@ -50,34 +50,34 @@ class SearchDaoImpl : SearchDao {
                 .Else(booleanLiteral(false))
         }.alias("is_favorite")
 
-        MovieTable
+        MoviesTable
             .join(
                 otherTable = FavoritesTable,
                 joinType = JoinType.LEFT,
-                onColumn = MovieTable.movieId,
+                onColumn = MoviesTable.movieId,
                 otherColumn = FavoritesTable.movieId
             )
             .select(
-                MovieTable.movieId,
-                MovieTable.title,
-                MovieTable.releaseDate,
-                MovieTable.duration,
-                MovieTable.voteAverage,
-                MovieTable.voteCount,
-                MovieTable.plot,
-                MovieTable.isAdult,
-                MovieTable.popularity,
-                MovieTable.price,
-                MovieTable.primaryImageUrl,
+                MoviesTable.movieId,
+                MoviesTable.title,
+                MoviesTable.releaseDate,
+                MoviesTable.duration,
+                MoviesTable.voteAverage,
+                MoviesTable.voteCount,
+                MoviesTable.plot,
+                MoviesTable.isAdult,
+                MoviesTable.popularity,
+                MoviesTable.price,
+                MoviesTable.primaryImageUrl,
                 isFavoriteAlias
             )
             .where {
                 conditions.fold(Op.TRUE as Op<Boolean>) { acc, op -> acc and op }
             }
             .groupBy(
-                MovieTable.movieId,
+                MoviesTable.movieId,
             )
-            .orderBy(MovieTable.voteAverage, SortOrder.DESC)
+            .orderBy(MoviesTable.voteAverage, SortOrder.DESC)
             .mapNotNull { it.toMovieSearchResponse(isFavoriteAlias) }
     }
 
@@ -97,41 +97,41 @@ class SearchDaoImpl : SearchDao {
 
         query?.let {
             conditions.add(
-                (MovieTable.title.lowerCase() like "%${it.lowercase()}%") or
-                        (MovieTable.plot.lowerCase() like "%${it.lowercase()}%")
+                (MoviesTable.title.lowerCase() like "%${it.lowercase()}%") or
+                        (MoviesTable.plot.lowerCase() like "%${it.lowercase()}%")
             )
         }
 
-        minVoteAverage?.let { conditions.add(MovieTable.voteAverage greaterEq it) }
-        maxVoteAverage?.let { conditions.add(MovieTable.voteAverage lessEq it) }
+        minVoteAverage?.let { conditions.add(MoviesTable.voteAverage greaterEq it) }
+        maxVoteAverage?.let { conditions.add(MoviesTable.voteAverage lessEq it) }
 
-        minReleaseDate?.let { conditions.add(MovieTable.releaseDate greaterEq it) }
-        maxReleaseDate?.let { conditions.add(MovieTable.releaseDate lessEq it) }
+        minReleaseDate?.let { conditions.add(MoviesTable.releaseDate greaterEq it) }
+        maxReleaseDate?.let { conditions.add(MoviesTable.releaseDate lessEq it) }
 
-        minDuration?.let { conditions.add(PGIntervalGreaterEqOp(MovieTable.duration, it)) }
-        maxDuration?.let { conditions.add(PGIntervalLessEqOp(MovieTable.duration, it)) }
+        minDuration?.let { conditions.add(PGIntervalGreaterEqOp(MoviesTable.duration, it)) }
+        maxDuration?.let { conditions.add(PGIntervalLessEqOp(MoviesTable.duration, it)) }
 
-        minPrice?.let { conditions.add(PGMoneyGreaterEqOp(MovieTable.price, it)) }
-        maxPrice?.let { conditions.add(PGMoneyLessEqOp(MovieTable.price, it)) }
+        minPrice?.let { conditions.add(PGMoneyGreaterEqOp(MoviesTable.price, it)) }
+        maxPrice?.let { conditions.add(PGMoneyLessEqOp(MoviesTable.price, it)) }
 
-        isAdult?.let { conditions.add(MovieTable.isAdult eq it) }
+        isAdult?.let { conditions.add(MoviesTable.isAdult eq it) }
 
         return conditions
     }
 }
 
 fun ResultRow.toMovieSearchResponse(isFavoriteAlias: Expression<Boolean>) = MovieSearchResponse(
-    this[MovieTable.movieId],
-    this[MovieTable.title],
-    this[MovieTable.releaseDate],
-    this[MovieTable.duration],
-    this[MovieTable.voteAverage],
-    this[MovieTable.voteCount],
-    this[MovieTable.plot],
-    this[MovieTable.isAdult],
-    this[MovieTable.popularity],
-    this[MovieTable.price],
-    this[MovieTable.primaryImageUrl],
+    this[MoviesTable.movieId],
+    this[MoviesTable.title],
+    this[MoviesTable.releaseDate],
+    this[MoviesTable.duration],
+    this[MoviesTable.voteAverage],
+    this[MoviesTable.voteCount],
+    this[MoviesTable.plot],
+    this[MoviesTable.isAdult],
+    this[MoviesTable.popularity],
+    this[MoviesTable.price],
+    this[MoviesTable.primaryImageUrl],
     this[isFavoriteAlias]
 )
 

@@ -7,5 +7,7 @@ interface UserDao {
 
     suspend fun getByUsername(username: String): User?
 
-    suspend fun updateUser(userId: Int, userRequest: UpdateUserRequest): User?
+    suspend fun updateUser(userId: Int, updateRequest: UpdateUserRequest): User?
+
+    suspend fun deleteUser(userId: Int): Boolean
 }

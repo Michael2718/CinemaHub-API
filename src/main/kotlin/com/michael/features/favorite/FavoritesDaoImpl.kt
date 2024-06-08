@@ -1,7 +1,7 @@
 package com.michael.features.favorite
 
 import com.michael.features.movie.Movie
-import com.michael.features.movie.MovieTable
+import com.michael.features.movie.MoviesTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -22,14 +22,14 @@ class FavoritesDaoImpl : FavoritesDao {
     override suspend fun getByUserId(userId: Int): List<FavoriteResponse> = dbQuery {
         FavoritesTable
             .join(
-                MovieTable,
+                MoviesTable,
                 JoinType.INNER,
                 onColumn = FavoritesTable.movieId,
-                otherColumn = MovieTable.movieId
+                otherColumn = MoviesTable.movieId
             )
             .selectAll()
             .where { FavoritesTable.userId eq userId }
-            .orderBy(MovieTable.title, SortOrder.DESC)
+            .orderBy(MoviesTable.title, SortOrder.DESC)
             .map { it.toFavoriteResponse() }
     }
 
@@ -57,17 +57,17 @@ class FavoritesDaoImpl : FavoritesDao {
 
     private fun ResultRow.toFavoriteResponse(): FavoriteResponse = FavoriteResponse(
         movie = Movie(
-            this[MovieTable.movieId],
-            this[MovieTable.title],
-            this[MovieTable.releaseDate],
-            this[MovieTable.duration],
-            this[MovieTable.voteAverage],
-            this[MovieTable.voteCount],
-            this[MovieTable.plot],
-            this[MovieTable.isAdult],
-            this[MovieTable.popularity],
-            this[MovieTable.price],
-            this[MovieTable.primaryImageUrl]
+            this[MoviesTable.movieId],
+            this[MoviesTable.title],
+            this[MoviesTable.releaseDate],
+            this[MoviesTable.duration],
+            this[MoviesTable.voteAverage],
+            this[MoviesTable.voteCount],
+            this[MoviesTable.plot],
+            this[MoviesTable.isAdult],
+            this[MoviesTable.popularity],
+            this[MoviesTable.price],
+            this[MoviesTable.primaryImageUrl]
         ),
         addedDate = this[FavoritesTable.addedDate]
     )

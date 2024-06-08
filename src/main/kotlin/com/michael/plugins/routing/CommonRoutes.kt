@@ -1,4 +1,4 @@
-package com.michael.plugins
+package com.michael.plugins.routing
 
 import com.michael.features.favorite.Favorite
 import com.michael.features.favorite.FavoriteRequest
@@ -6,7 +6,6 @@ import com.michael.features.favorite.FavoritesDaoImpl
 import com.michael.features.genre.GenreDaoImpl
 import com.michael.features.history.History
 import com.michael.features.history.HistoryDaoImpl
-import com.michael.features.movie.Movie
 import com.michael.features.movie.MovieDaoImpl
 import com.michael.features.review.ReviewDaoImpl
 import com.michael.features.search.SearchDaoImpl
@@ -16,13 +15,13 @@ import com.michael.features.signup.insertUser
 import com.michael.features.transaction.TransactionDaoImpl
 import com.michael.features.user.UpdateUserRequest
 import com.michael.features.user.UserDaoImpl
+import com.michael.plugins.DatabaseSingleton
 import com.michael.plugins.authentication.Credentials
 import com.michael.plugins.authentication.JwtConfig
 import com.michael.plugins.authentication.isAdmin
 import com.michael.plugins.authentication.isValidUser
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -30,28 +29,6 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.postgresql.util.PGInterval
 import org.postgresql.util.PGmoney
-
-fun Application.configureRouting() {
-    routing {
-        signInRoute()
-        signUpRoute()
-        authenticate("user-auth-jwt", "admin-auth-jwt") {
-            searchRoute()
-            favoritesRoute()
-            genresRoute()
-            historyRoute()
-            movieRoute()
-            reviewRoute()
-            transactionRoute()
-            userRoute()
-        }
-        authenticate("admin-auth-jwt") {
-            get("/admin") {
-                call.respond(HttpStatusCode.OK, "I am admin")
-            }
-        }
-    }
-}
 
 fun Route.signInRoute() {
     post("/signin") {
@@ -323,18 +300,9 @@ fun Route.historyRoute() {
     }
 }
 
-fun Route.movieRoute() {
-    route("/movie") {
+fun Route.moviesRoute() {
+    route("/movies") {
         val dao = MovieDaoImpl()
-//        get {
-//            val movies = dao.getAll()
-//            if (movies.isNotEmpty()) {
-////                call.respond(HttpStatusCode.OK, movies)
-//                call.respond(HttpStatusCode.OK, mapOf("items" to movies))
-//            } else {
-//                call.respond(HttpStatusCode.NoContent)
-//            }
-//        }
 
         get("{movie_id}") {
             val movieId = call.parameters["movie_id"]
@@ -374,20 +342,10 @@ fun Route.movieRoute() {
                 call.respondText("$e", status = HttpStatusCode.BadRequest)
             }
         }
-
-        post {
-            try {
-                val movie = call.receive<Movie>()
-                dao.addMovie(movie)
-                call.respond(HttpStatusCode.OK)
-            } catch (e: Exception) {
-                call.respondText("$e", status = HttpStatusCode.BadRequest)
-            }
-        }
     }
 }
 
-fun Route.reviewRoute() {
+fun Route.reviewsRoute() {
     route("/reviews") {
         val dao = ReviewDaoImpl()
         get {
@@ -477,8 +435,8 @@ fun Route.reviewRoute() {
     }
 }
 
-fun Route.transactionRoute() {
-    route("/transaction") {
+fun Route.transactionsRoute() {
+    route("/transactions") {
         val dao = TransactionDaoImpl()
         get {
             val transactions = dao.getAll()
@@ -512,58 +470,26 @@ fun Route.transactionRoute() {
     }
 }
 
-fun Route.userRoute() {
-    route("/user") {
+fun Route.usersRoute() {
+    route("/users") {
         val dao = UserDaoImpl()
-//        get {
-//            val users = dao.getAll()
-//            if (users.isNotEmpty()) {
-//                call.respond(HttpStatusCode.OK, users)
-//            } else {
-//                call.respond(HttpStatusCode.NoContent)
-//            }
-//        }
+
         get("{user_id}") {
-            val userId = call.parameters["user_id"]?.toIntOrNull()
+            val userId = call.parameters["user_id"]?.toIntOrNull() ?: return@get call.respondText(
+                "Missing or invalid id",
+                status = HttpStatusCode.BadRequest
+            )
 
-            if (userId == null) {
-                call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
-                return@get
-            }
+            val user = dao.getByUserId(userId) ?: call.respondText(
+                "User not found",
+                status = HttpStatusCode.BadRequest
+            )
 
-            val user = dao.getByUserId(userId)
-            when {
-                user == null -> call.respondText(
-                    "User not found",
-                    status = HttpStatusCode.BadRequest
-                )
-
-                else -> call.respond(HttpStatusCode.OK, user)
-            }
+            call.respond(HttpStatusCode.OK, user)
         }
 
-        post("{user_id}") {
-            try {
-                val userId = call.parameters["user_id"]?.toIntOrNull()
-                if (userId == null) {
-                    call.respondText("Missing or invalid id", status = HttpStatusCode.BadRequest)
-                    return@post
-                }
-                val request = call.receive<UpdateUserRequest>()
-                val updatedUser = dao.updateUser(userId, request)
-                if (updatedUser == null) {
-                    call.respondText("Invalid user info", status = HttpStatusCode.BadRequest)
-                    return@post
-                }
-                call.respond(message = updatedUser, status = HttpStatusCode.OK)
-            } catch (e: Exception) {
-                println(e)
-                call.respondText("$e", status = HttpStatusCode.BadRequest)
-            }
-        }
-
-        get {
-            val username = call.request.queryParameters["username"] ?: return@get call.respondText(
+        get("/username/{username}") {
+            val username = call.parameters["username"] ?: return@get call.respondText(
                 "Missing username",
                 status = HttpStatusCode.BadRequest
             )
@@ -573,10 +499,26 @@ fun Route.userRoute() {
                 status = HttpStatusCode.BadRequest
             )
 
-            call.respond(
-                status = HttpStatusCode.OK,
-                user
-            )
+            call.respond(HttpStatusCode.OK, user)
+        }
+
+        put("{user_id}") {
+            try {
+                val userId = call.parameters["user_id"]?.toIntOrNull() ?: return@put call.respondText(
+                    "Missing or invalid id",
+                    status = HttpStatusCode.BadRequest
+                )
+
+                val request = call.receive<UpdateUserRequest>()
+                val updatedUser = dao.updateUser(userId, request) ?: return@put call.respondText(
+                    "Invalid user info or invalid id",
+                    status = HttpStatusCode.BadRequest
+                )
+
+                call.respond(message = updatedUser, status = HttpStatusCode.OK)
+            } catch (e: Exception) {
+                call.respondText("$e", status = HttpStatusCode.BadRequest)
+            }
         }
     }
 }
