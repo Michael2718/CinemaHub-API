@@ -63,7 +63,7 @@ fun Route.moviesRouteAdmin() {
                     call.respondText("Invalid movie info or invalid id", status = HttpStatusCode.BadRequest)
                     return@put
                 }
-                call.respond(message = updatedMovie, status = HttpStatusCode.OK)
+                call.respond(HttpStatusCode.OK, updatedMovie)
             } catch (e: Exception) {
                 call.respondText("$e", status = HttpStatusCode.BadRequest)
             }
@@ -104,14 +104,14 @@ fun Route.usersRouteAdmin() {
 fun Route.reviewsRouteAdmin() {
     route("/reviews") {
         val dao = ReviewDaoImpl()
-        get {
-            val reviews = dao.getAll()
-            if (reviews.isNotEmpty()) {
-                call.respond(HttpStatusCode.OK, reviews)
-            } else {
-                call.respond(HttpStatusCode.NoContent)
-            }
-        }
+//        get {
+//            val reviews = dao.getAll()
+//            if (reviews.isNotEmpty()) {
+//                call.respond(HttpStatusCode.OK, reviews)
+//            } else {
+//                call.respond(HttpStatusCode.NoContent)
+//            }
+//        }
 
         delete("{movieId}/{userId}") {
             val movieId = call.parameters["movieId"] ?: return@delete call.respondText(

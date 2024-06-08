@@ -91,3 +91,9 @@ fun isAdmin(credentials: Credentials): Boolean {
 data class Credentials(val username: String, val password: String)
 
 fun Credentials.toPair() = this.username to this.password
+
+@Serializable
+data class Token(
+    val token: String
+)
+

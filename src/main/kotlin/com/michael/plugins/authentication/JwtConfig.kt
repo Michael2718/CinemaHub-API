@@ -37,14 +37,16 @@ object JwtConfig {
             .build()
 
 
-    fun generateToken(credentials: Credentials, isAdmin: Boolean): String {
+    fun generateToken(credentials: Credentials, isAdmin: Boolean): Token {
         val audience = if (isAdmin) admin_audience else user_audience
-        return JWT.create()
-            .withAudience(audience)
-            .withIssuer(issuer)
-            .withClaim("username", credentials.username)
-            .withClaim("password", credentials.password)
-            .withExpiresAt(Date(System.currentTimeMillis() + 1209600000))
-            .sign(algorithm)
+        return Token(
+            token = JWT.create()
+                .withAudience(audience)
+                .withIssuer(issuer)
+                .withClaim("username", credentials.username)
+                .withClaim("password", credentials.password)
+                .withExpiresAt(Date(System.currentTimeMillis() + 1209600000))
+                .sign(algorithm)
+        )
     }
 }

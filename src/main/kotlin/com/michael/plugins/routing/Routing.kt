@@ -21,6 +21,7 @@ fun Application.configureRouting() {
         authenticate("admin-auth-jwt") {
             moviesRouteAdmin()
             usersRouteAdmin()
+            reviewsRouteAdmin()
         }
     }
 }

@@ -16,10 +16,7 @@ import com.michael.features.transaction.TransactionDaoImpl
 import com.michael.features.user.UpdateUserRequest
 import com.michael.features.user.UserDaoImpl
 import com.michael.plugins.DatabaseSingleton
-import com.michael.plugins.authentication.Credentials
-import com.michael.plugins.authentication.JwtConfig
-import com.michael.plugins.authentication.isAdmin
-import com.michael.plugins.authentication.isValidUser
+import com.michael.plugins.authentication.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -37,7 +34,10 @@ fun Route.signInRoute() {
         if (isValidUser(credentials)) {
             val isAdmin = isAdmin(credentials)
             val token = JwtConfig.generateToken(credentials, isAdmin)
-            call.respond(mapOf("token" to token))
+            call.respond(
+                HttpStatusCode.OK,
+                token
+            )
         } else {
             call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
         }
@@ -67,7 +67,7 @@ fun Route.signUpRoute() {
             }
 
             val token = JwtConfig.generateToken(credentials, isAdmin = false)
-            call.respond(mapOf("token" to token))
+            call.respond(token)
         } catch (e: Exception) {
             call.respondText(
                 "Something went wrong",
