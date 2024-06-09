@@ -1,6 +1,6 @@
 package com.michael.plugins.routing
 
-import com.michael.features.movie.Movie
+import com.michael.features.movie.AddMovieRequest
 import com.michael.features.movie.MovieDaoImpl
 import com.michael.features.movie.UpdateMovieRequest
 import com.michael.features.review.ReviewDaoImpl
@@ -25,9 +25,9 @@ fun Route.moviesRouteAdmin() {
 
         post {
             try {
-                val movie = call.receive<Movie>()
-                dao.addMovie(movie)
-                call.respond(HttpStatusCode.OK)
+                val request = call.receive<AddMovieRequest>()
+                val movie = dao.addMovie(request) ?: return@post call.respond(HttpStatusCode.BadRequest)
+                call.respond(HttpStatusCode.OK, movie)
             } catch (e: Exception) {
                 call.respondText("$e", status = HttpStatusCode.BadRequest)
             }

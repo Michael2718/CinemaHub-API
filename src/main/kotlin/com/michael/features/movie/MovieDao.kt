@@ -7,7 +7,7 @@ interface MovieDao {
     suspend fun getByUserId(movieId: String, userId: Int): MovieDetailsResponse?
 
     suspend fun addMovie(
-        movie: Movie
+        request: AddMovieRequest
     ): Movie?
 
     suspend fun deleteMovie(movieId: String): Boolean

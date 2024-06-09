@@ -67,19 +67,16 @@ class MovieDaoImpl : MovieDao {
             .singleOrNull()?.toMovieDetailsResponse(isFavoriteAlias, isBoughtAlias)
     }
 
-    override suspend fun addMovie(movie: Movie): Movie? = dbQuery {
+    override suspend fun addMovie(request: AddMovieRequest): Movie? = dbQuery {
         val movieInsertStatement = MoviesTable.insert {
-            it[movieId] = movie.movieId
-            it[title] = movie.title
-            it[releaseDate] = movie.releaseDate
-            it[duration] = movie.duration
-            it[voteAverage] = movie.voteAverage
-            it[voteCount] = movie.voteCount
-            it[plot] = movie.plot
-            it[isAdult] = movie.isAdult
-            it[popularity] = movie.popularity
-            it[price] = movie.price
-            it[primaryImageUrl] = movie.primaryImageUrl
+            it[movieId] = request.movieId
+            it[title] = request.title
+            it[releaseDate] = request.releaseDate
+            it[duration] = request.duration
+            it[plot] = request.plot
+            it[isAdult] = request.isAdult
+            it[price] = request.price
+            it[primaryImageUrl] = request.primaryImageUrl
         }
 
         movieInsertStatement.resultedValues?.singleOrNull()?.toMovie()
