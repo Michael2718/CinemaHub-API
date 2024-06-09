@@ -7,7 +7,6 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.postgresql.util.PGInterval
 
@@ -34,7 +33,7 @@ object IntervalColumnType : IColumnType<PGInterval> {
     }
 
     override fun valueToString(value: PGInterval?): String {
-        return value?.toString() ?: super.valueToString(value)
+        return value?.let { "'$it'" } ?: super.valueToString(value)
     }
 }
 
@@ -70,10 +69,10 @@ object PGIntervalSerializer : KSerializer<PGInterval> {
     }
 }
 
-fun parsePGInterval(intervalString: String): PGInterval {
-    val json = Json { ignoreUnknownKeys = true }
-    return json.decodeFromString(PGIntervalSerializer, intervalString)
-}
+//fun parsePGInterval(intervalString: String): PGInterval {
+//    val json = Json { ignoreUnknownKeys = true }
+//    return json.decodeFromString(PGIntervalSerializer, intervalString)
+//}
 
 class PGIntervalGreaterEqOp(
     private val left: Column<PGInterval>,

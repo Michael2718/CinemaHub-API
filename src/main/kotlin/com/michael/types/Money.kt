@@ -40,7 +40,7 @@ object MoneyColumnType : IColumnType<PGmoney> {
     }
 
     override fun valueToString(value: PGmoney?): String {
-        return value?.toString() ?: super.valueToString(value)
+        return value?.let { "'$it'" } ?: super.valueToString(value)
     }
 }
 
