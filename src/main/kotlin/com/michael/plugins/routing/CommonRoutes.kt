@@ -16,16 +16,16 @@ import com.michael.features.transaction.TransactionDaoImpl
 import com.michael.features.user.UpdateUserRequest
 import com.michael.features.user.UserDaoImpl
 import com.michael.plugins.DatabaseSingleton
-import com.michael.plugins.authentication.*
+import com.michael.plugins.authentication.Credentials
+import com.michael.plugins.authentication.JwtConfig
+import com.michael.plugins.authentication.isAdmin
+import com.michael.plugins.authentication.isValidUser
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.exceptions.ExposedSQLException
-import org.postgresql.util.PGInterval
-import org.postgresql.util.PGmoney
 
 fun Route.signInRoute() {
     post("/signin") {
@@ -82,20 +82,22 @@ fun Route.searchRoute() {
         val dao = SearchDaoImpl()
 
         get {
-            val query = call.request.queryParameters["query"]
-            val minVoteAverage = call.request.queryParameters["minVoteAverage"]?.toDoubleOrNull()
-            val maxVoteAverage = call.request.queryParameters["maxVoteAverage"]?.toDoubleOrNull()
-            val minReleaseDate = call.request.queryParameters["minReleaseDate"]?.let { LocalDate.parse(it) }
-            val maxReleaseDate = call.request.queryParameters["maxReleaseDate"]?.let { LocalDate.parse(it) }
-            val minDuration = call.request.queryParameters["minDuration"]?.let { PGInterval(it) }
-            val maxDuration = call.request.queryParameters["maxDuration"]?.let { PGInterval(it) }
-            val minPrice = call.request.queryParameters["minPrice"]?.let { PGmoney(it.toDouble()) }
-            val maxPrice = call.request.queryParameters["maxPrice"]?.let { PGmoney(it.toDouble()) }
-            val isAdult = call.request.queryParameters["isAdult"]?.toBooleanStrictOrNull()
+            val queryParams = call.getMovieQueryParams()
+
+//            val queryParams.query = call.getQueryParam("query")
+//            val queryParams.minVoteAverage = call.getQueryParamDouble("minVoteAverage")
+//            val queryParams.maxVoteAverage = call.getQueryParamDouble("maxVoteAverage")
+//            val queryParams.minReleaseDate = call.getQueryParamDate("minReleaseDate")
+//            val queryParams.maxReleaseDate = call.getQueryParamDate("maxReleaseDate")
+//            val queryParams.minDuration = call.getQueryParamPGInterval("minDuration")
+//            val queryParams.maxDuration = call.getQueryParamPGInterval("maxDuration")
+//            val queryParams.minPrice = call.getQueryParamPGmoney("minPrice")
+//            val queryParams.maxPrice = call.getQueryParamPGmoney("maxPrice")
+//            val queryParams.isAdult = call.getQueryParamBoolean("isAdult")
 
             val userId = call.request.queryParameters["userId"]?.toIntOrNull()
 
-            if (query == null) {
+            if (queryParams.query == null) {
                 call.respondText(
                     "Missing query parameter",
                     status = HttpStatusCode.BadRequest
@@ -112,20 +114,24 @@ fun Route.searchRoute() {
             }
 
             val movies = dao.searchMovies(
-                query = query,
-                minVoteAverage = minVoteAverage,
-                maxVoteAverage = maxVoteAverage,
-                minReleaseDate = minReleaseDate,
-                maxReleaseDate = maxReleaseDate,
-                minDuration = minDuration,
-                maxDuration = maxDuration,
-                minPrice = minPrice,
-                maxPrice = maxPrice,
-                isAdult = isAdult,
-                userId = userId
+                query  = queryParams.query,
+                minVoteAverage = queryParams.minVoteAverage,
+                maxVoteAverage = queryParams.maxVoteAverage,
+                minReleaseDate = queryParams.minReleaseDate,
+                maxReleaseDate  = queryParams.maxReleaseDate,
+                minDuration =  queryParams.minDuration,
+                maxDuration = queryParams.maxDuration,
+                minPrice = queryParams.minPrice,
+                maxPrice = queryParams.maxPrice,
+                isAdult = queryParams.isAdult,
+                userId  = userId,
             )
 
-            call.respond(HttpStatusCode.OK, movies)
+            if (movies.isNotEmpty()) {
+                call.respond(HttpStatusCode.OK, movies)
+            } else {
+                call.respond(HttpStatusCode.NoContent)
+            }
         }
     }
 }

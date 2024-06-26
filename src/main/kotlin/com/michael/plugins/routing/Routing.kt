@@ -22,6 +22,7 @@ fun Application.configureRouting() {
             moviesRouteAdmin()
             usersRouteAdmin()
             reviewsRouteAdmin()
+            statisticsRouteAdmin()
         }
     }
 }

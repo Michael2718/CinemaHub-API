@@ -1,7 +1,7 @@
 package com.michael.features.user
 
 interface UserDao {
-    suspend fun getAll(): List<User>
+    suspend fun getAll(query: String?): List<User>
 
     suspend fun getByUserId(userId: Int): User?
 

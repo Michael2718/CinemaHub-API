@@ -102,7 +102,7 @@ BEGIN
     FROM "user" u
     WHERE u.user_id = NEW.user_id;
 
-    SELECT m.adult
+    SELECT m.is_adult
     INTO is_movie_adult
     FROM movie m
     WHERE m.movie_id = NEW.movie_id;

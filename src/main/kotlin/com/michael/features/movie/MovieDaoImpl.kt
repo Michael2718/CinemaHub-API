@@ -2,14 +2,63 @@ package com.michael.features.movie
 
 import com.michael.features.favorite.FavoritesTable
 import com.michael.features.search.boolOr
+import com.michael.features.search.getSearchConditions
 import com.michael.features.transaction.TransactionTable
 import com.michael.plugins.DatabaseSingleton.dbQuery
+import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.postgresql.util.PGInterval
+import org.postgresql.util.PGmoney
 
 class MovieDaoImpl : MovieDao {
-    override suspend fun getAll(): List<Movie> = dbQuery {
-        MoviesTable.selectAll().map { it.toMovie() }
+    override suspend fun getAll(
+        query: String?,
+        minVoteAverage: Double?,
+        maxVoteAverage: Double?,
+        minReleaseDate: LocalDate?,
+        maxReleaseDate: LocalDate?,
+        minDuration: PGInterval?,
+        maxDuration: PGInterval?,
+        minPrice: PGmoney?,
+        maxPrice: PGmoney?,
+        isAdult: Boolean?,
+    ): List<Movie> = dbQuery {
+        val conditions = getSearchConditions(
+            query,
+            minVoteAverage,
+            maxVoteAverage,
+            minReleaseDate,
+            maxReleaseDate,
+            minDuration,
+            maxDuration,
+            minPrice,
+            maxPrice,
+            isAdult,
+        )
+
+        MoviesTable
+            .select(
+                MoviesTable.movieId,
+                MoviesTable.title,
+                MoviesTable.releaseDate,
+                MoviesTable.duration,
+                MoviesTable.voteAverage,
+                MoviesTable.voteCount,
+                MoviesTable.plot,
+                MoviesTable.isAdult,
+                MoviesTable.popularity,
+                MoviesTable.price,
+                MoviesTable.primaryImageUrl
+            )
+            .where {
+                conditions.fold(Op.TRUE as Op<Boolean>) { acc, op -> acc and op }
+            }
+            .groupBy(
+                MoviesTable.movieId,
+            )
+            .orderBy(MoviesTable.voteAverage, SortOrder.DESC)
+            .map { it.toMovie() }
     }
 
     override suspend fun get(movieId: String): Movie? = dbQuery {

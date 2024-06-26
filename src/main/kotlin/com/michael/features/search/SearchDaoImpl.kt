@@ -80,44 +80,44 @@ class SearchDaoImpl : SearchDao {
             .orderBy(MoviesTable.voteAverage, SortOrder.DESC)
             .mapNotNull { it.toMovieSearchResponse(isFavoriteAlias) }
     }
+}
 
-    private fun getSearchConditions(
-        query: String?,
-        minVoteAverage: Double?,
-        maxVoteAverage: Double?,
-        minReleaseDate: LocalDate?,
-        maxReleaseDate: LocalDate?,
-        minDuration: PGInterval?,
-        maxDuration: PGInterval?,
-        minPrice: PGmoney?,
-        maxPrice: PGmoney?,
-        isAdult: Boolean?,
-    ): MutableList<Op<Boolean>> {
-        val conditions = mutableListOf<Op<Boolean>>()
+fun getSearchConditions(
+    query: String?,
+    minVoteAverage: Double?,
+    maxVoteAverage: Double?,
+    minReleaseDate: LocalDate?,
+    maxReleaseDate: LocalDate?,
+    minDuration: PGInterval?,
+    maxDuration: PGInterval?,
+    minPrice: PGmoney?,
+    maxPrice: PGmoney?,
+    isAdult: Boolean?,
+): MutableList<Op<Boolean>> {
+    val conditions = mutableListOf<Op<Boolean>>()
 
-        query?.let {
-            conditions.add(
-                (MoviesTable.title.lowerCase() like "%${it.lowercase()}%") or
-                        (MoviesTable.plot.lowerCase() like "%${it.lowercase()}%")
-            )
-        }
-
-        minVoteAverage?.let { conditions.add(MoviesTable.voteAverage greaterEq it) }
-        maxVoteAverage?.let { conditions.add(MoviesTable.voteAverage lessEq it) }
-
-        minReleaseDate?.let { conditions.add(MoviesTable.releaseDate greaterEq it) }
-        maxReleaseDate?.let { conditions.add(MoviesTable.releaseDate lessEq it) }
-
-        minDuration?.let { conditions.add(PGIntervalGreaterEqOp(MoviesTable.duration, it)) }
-        maxDuration?.let { conditions.add(PGIntervalLessEqOp(MoviesTable.duration, it)) }
-
-        minPrice?.let { conditions.add(PGMoneyGreaterEqOp(MoviesTable.price, it)) }
-        maxPrice?.let { conditions.add(PGMoneyLessEqOp(MoviesTable.price, it)) }
-
-        isAdult?.let { conditions.add(MoviesTable.isAdult eq it) }
-
-        return conditions
+    query?.let {
+        conditions.add(
+            (MoviesTable.title.lowerCase() like "%${it.lowercase()}%") or
+                    (MoviesTable.plot.lowerCase() like "%${it.lowercase()}%")
+        )
     }
+
+    minVoteAverage?.let { conditions.add(MoviesTable.voteAverage greaterEq it) }
+    maxVoteAverage?.let { conditions.add(MoviesTable.voteAverage lessEq it) }
+
+    minReleaseDate?.let { conditions.add(MoviesTable.releaseDate greaterEq it) }
+    maxReleaseDate?.let { conditions.add(MoviesTable.releaseDate lessEq it) }
+
+    minDuration?.let { conditions.add(PGIntervalGreaterEqOp(MoviesTable.duration, it)) }
+    maxDuration?.let { conditions.add(PGIntervalLessEqOp(MoviesTable.duration, it)) }
+
+    minPrice?.let { conditions.add(PGMoneyGreaterEqOp(MoviesTable.price, it)) }
+    maxPrice?.let { conditions.add(PGMoneyLessEqOp(MoviesTable.price, it)) }
+
+    isAdult?.let { conditions.add(MoviesTable.isAdult eq it) }
+
+    return conditions
 }
 
 fun ResultRow.toMovieSearchResponse(isFavoriteAlias: Expression<Boolean>) = MovieSearchResponse(

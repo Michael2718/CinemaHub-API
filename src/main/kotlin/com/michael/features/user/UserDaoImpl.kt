@@ -1,15 +1,29 @@
 package com.michael.features.user
 
 import com.michael.plugins.DatabaseSingleton.dbQuery
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 
 class UserDaoImpl : UserDao {
-    override suspend fun getAll(): List<User> = dbQuery {
-        UserTable.selectAll().map { it.toUser() }
+    override suspend fun getAll(query: String?): List<User> = dbQuery {
+        val conditions = mutableListOf<Op<Boolean>>()
+        query?.let {
+            conditions.add(
+                (UserTable.username.lowerCase() like "%${it.lowercase()}%") or
+                        (UserTable.firstName.lowerCase() like "%${it.lowercase()}%") or
+                        (UserTable.lastName.lowerCase() like "%${it.lowercase()}%") or
+                        (UserTable.email.lowerCase() like "%${it.lowercase()}%")
+            )
+        }
+
+        UserTable
+            .selectAll()
+            .where {
+                conditions.fold(Op.TRUE as Op<Boolean>) { acc, op -> acc and op }
+            }
+            .orderBy(UserTable.userId)
+            .map { it.toUser() }
     }
 
     override suspend fun getByUserId(userId: Int): User? = dbQuery {

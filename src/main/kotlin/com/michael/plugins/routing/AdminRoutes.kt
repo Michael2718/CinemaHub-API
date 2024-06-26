@@ -4,6 +4,7 @@ import com.michael.features.movie.AddMovieRequest
 import com.michael.features.movie.MovieDaoImpl
 import com.michael.features.movie.UpdateMovieRequest
 import com.michael.features.review.ReviewDaoImpl
+import com.michael.features.statistics.StatisticsDaoImpl
 import com.michael.features.user.UserDaoImpl
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -15,7 +16,21 @@ fun Route.moviesRouteAdmin() {
     route("/movies") {
         val dao = MovieDaoImpl()
         get {
-            val movies = dao.getAll()
+            val queryParams = call.getMovieQueryParams()
+
+
+            val movies = dao.getAll(
+                query  = queryParams.query ?: "",
+                minVoteAverage = queryParams.minVoteAverage,
+                maxVoteAverage = queryParams.maxVoteAverage,
+                minReleaseDate = queryParams.minReleaseDate,
+                maxReleaseDate  = queryParams.maxReleaseDate,
+                minDuration =  queryParams.minDuration,
+                maxDuration = queryParams.maxDuration,
+                minPrice = queryParams.minPrice,
+                maxPrice = queryParams.maxPrice,
+                isAdult = queryParams.isAdult,
+            )
             if (movies.isNotEmpty()) {
                 call.respond(HttpStatusCode.OK, movies)
             } else {
@@ -75,7 +90,8 @@ fun Route.usersRouteAdmin() {
     route("/users") {
         val dao = UserDaoImpl()
         get {
-            val users = dao.getAll()
+            val query = call.request.queryParameters["query"]
+            val users = dao.getAll(query)
             if (users.isNotEmpty()) {
                 call.respond(HttpStatusCode.OK, users)
             } else {
@@ -131,6 +147,30 @@ fun Route.reviewsRouteAdmin() {
                     "No such review",
                     status = HttpStatusCode.BadRequest
                 )
+            }
+        }
+    }
+}
+
+fun Route.statisticsRouteAdmin() {
+    route("statistics") {
+        val dao = StatisticsDaoImpl()
+
+        get("genres") {
+            try {
+                val stats = dao.getGenresStats()
+                call.respond(HttpStatusCode.OK, stats)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, e.toString())
+            }
+        }
+
+        get("users") {
+            try {
+                val stats = dao.getUsersStats()
+                call.respond(HttpStatusCode.OK, stats)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, e.toString())
             }
         }
     }
