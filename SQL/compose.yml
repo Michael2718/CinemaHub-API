@@ -1,0 +1,48 @@
+services:
+  postgres:
+    container_name: cinemahub-postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pg_data:/var/lib/postgresql/data # Persistent data volume
+      - postgres_init:/docker-entrypoint-initdb.d # Optional initialization scripts (if applicable)
+    ports:
+      - 5432:5432
+    restart: always
+    networks:
+      - cinemahub_network
+
+  pgadmin:
+    container_name: cinemahub-pgadmin
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - 5050:80
+    depends_on:
+      - postgres
+    networks:
+      - cinemahub_network
+
+volumes:
+  pg_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: C:\docker-data\postgres\CinemaHub\data
+  postgres_init:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: C:\docker-data\postgres\CinemaHub\init
+
+networks:
+  cinemahub_network:
+    driver: bridge
